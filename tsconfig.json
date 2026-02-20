@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/storage" },
+    { "path": "packages/collector" },
+    { "path": "packages/cli" },
+    { "path": "packages/server" },
+    { "path": "examples/reference-mcp-server" }
+  ]
+}
