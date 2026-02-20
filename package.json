@@ -1,0 +1,36 @@
+{
+  "name": "mcp-reliable-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Runtime observability and reliability platform for the Model Context Protocol ecosystem",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc -b --force",
+    "clean": "npm run clean --workspaces --if-present && rimraf coverage",
+    "demo": "npm run build && node packages/cli/dist/index.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^22.10.5",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.19.1",
+    "vitest": "^2.1.8"
+  }
+}
