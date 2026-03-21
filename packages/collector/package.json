@@ -1,0 +1,26 @@
+{
+  "name": "@mcp-reliable/collector",
+  "version": "0.1.0",
+  "description": "Health checking and traffic-observing proxy collectors for MCP servers",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@mcp-reliable/core": "^0.1.0",
+    "@mcp-reliable/storage": "^0.1.0",
+    "@modelcontextprotocol/sdk": "^1.29.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
