@@ -1,0 +1,30 @@
+{
+  "name": "@mcp-reliable/server",
+  "version": "0.1.0",
+  "description": "REST API exposing mcp-reliable's stored reliability data (foundation for the web dashboard and agent-facing MCP interface)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "mcp-reliable-server": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.8",
+    "@mcp-reliable/core": "^0.1.0",
+    "@mcp-reliable/storage": "^0.1.0",
+    "hono": "^4.12.30"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
