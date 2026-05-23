@@ -90,6 +90,69 @@ describe("createApp", () => {
     expect(body.healthScore?.score).toBeCloseTo(100, 5);
   });
 
+  it("GET /api/servers/:id/health reports lastHealthCheck from the most recent check", async () => {
+    store.upsertServer(makeServer());
+    store.recordExecution({
+      id: randomUUID(),
+      serverId: "srv-1",
+      toolName: "__health_check__",
+      startedAt: 1000,
+      durationMs: 5,
+      success: false,
+      source: "health-check"
+    });
+    store.recordExecution({
+      id: randomUUID(),
+      serverId: "srv-1",
+      toolName: "__health_check__",
+      startedAt: 2000,
+      durationMs: 5,
+      success: true,
+      source: "health-check"
+    });
+    const app = createApp(store);
+    const res = await app.request("/api/servers/srv-1/health");
+    const body = (await res.json()) as { lastHealthCheck: { success: boolean; at: number } | null };
+    // The most recent check (at=2000) succeeded, even though an earlier one failed.
+    expect(body.lastHealthCheck).toEqual({ success: true, at: 2000 });
+  });
+
+  it("GET /api/servers/health-summary returns a redacted summary for every server", async () => {
+    store.upsertServer(makeServer({ id: "srv-1", name: "alpha" }));
+    store.upsertServer(makeServer({ id: "srv-2", name: "beta", transport: { type: "stdio", command: "node" } }));
+    store.recordExecution({
+      id: randomUUID(),
+      serverId: "srv-1",
+      toolName: "search",
+      startedAt: Date.now(),
+      durationMs: 20,
+      success: true,
+      source: "proxy"
+    });
+
+    const app = createApp(store);
+    const res = await app.request("/api/servers/health-summary");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { servers: Array<{ server: Server; healthScore: unknown }> };
+    expect(body.servers).toHaveLength(2);
+    expect(body.servers.map((s) => s.server.name).sort()).toEqual(["alpha", "beta"]);
+
+    const alpha = body.servers.find((s) => s.server.name === "alpha");
+    expect(alpha?.healthScore).not.toBeNull();
+    const alphaTransport = alpha?.server.transport as { env?: Record<string, string> };
+    expect(alphaTransport.env?.API_KEY).toBe("***");
+  });
+
+  it("GET /api/servers/health-summary is not shadowed by the /:id route", async () => {
+    // Regression guard: /api/servers/health-summary must resolve to the
+    // summary handler, not be captured as /api/servers/:id with id="health-summary".
+    const app = createApp(store);
+    const res = await app.request("/api/servers/health-summary");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { servers: unknown };
+    expect(Array.isArray(body.servers)).toBe(true);
+  });
+
   it("GET /api/servers/:id/executions filters by tool name", async () => {
     store.upsertServer(makeServer());
     store.recordExecution({
