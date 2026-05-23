@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens for the mcp-reliable dashboard.
+ *
+ * This is deliberately not a generic dashboard palette: mcp-reliable's
+ * primary surface is a terminal CLI (chalk-colored status, cli-table3
+ * tables — see packages/cli/src/format.ts), so the web dashboard is built
+ * as an extension of that same visual language rather than a distinct
+ * "web app" identity. Monospace carries the data (scores, latencies,
+ * timestamps, server ids) since that IS the product's content; a plain
+ * system sans handles UI chrome and prose. See docs/decisions/0008.
+ */
+@theme {
+  --color-canvas: #0b0f14;
+  --color-panel: #12181f;
+  --color-panel-hover: #182029;
+  --color-border: #232b33;
+  --color-text-primary: #e6edf3;
+  --color-text-muted: #7d8590;
+
+  /* Status colors mirror the CLI's colorForScore/formatSeverity thresholds exactly. */
+  --color-good: #3fda7a;
+  --color-warn: #e3a008;
+  --color-bad: #f85149;
+  --color-info: #58a6ff;
+
+  --font-mono:
+    ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-sans:
+    ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+  }
+
+  /* Visible keyboard focus everywhere, not just form controls. */
+  :focus-visible {
+    outline: 2px solid var(--color-info);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* The signature "status line" row used by the fleet overview — a live,
+     clickable version of what `mcp-reliable servers`/`monitor` already
+     prints in the terminal. */
+  .status-row {
+    display: grid;
+    grid-template-columns: 1.25rem minmax(0, 1fr) 4.5rem 4.5rem 5rem 8rem;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+  }
+}

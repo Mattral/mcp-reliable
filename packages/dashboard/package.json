@@ -1,0 +1,29 @@
+{
+  "name": "@mcp-reliable/dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Web dashboard for mcp-reliable: fleet overview and per-server detail, served as static assets by @mcp-reliable/server",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "clean": "rimraf dist dist-types *.tsbuildinfo"
+  },
+  "dependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.1",
+    "recharts": "^3.9.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "^4.3.2",
+    "typescript": "^5.7.3",
+    "vite": "^8.1.4"
+  }
+}
