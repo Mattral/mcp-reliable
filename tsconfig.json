@@ -6,6 +6,7 @@
     { "path": "packages/collector" },
     { "path": "packages/cli" },
     { "path": "packages/server" },
+    { "path": "packages/dashboard" },
     { "path": "examples/reference-mcp-server" }
   ]
 }

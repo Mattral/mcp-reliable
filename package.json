@@ -1,7 +1,7 @@
 {
   "name": "mcp-reliable-monorepo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Runtime observability and reliability platform for the Model Context Protocol ecosystem",
   "type": "module",
   "engines": {
