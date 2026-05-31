@@ -100,6 +100,18 @@ report these as two separate fields for exactly this reason — collapsing
 them into one number would hide which of "nobody's using it" and "it's
 broken" you're looking at.
 
+A related, narrower distinction lives inside "reachable" itself:
+`reachabilityRate` (used by `report` and the REST API) is a windowed
+*aggregate* — the fraction of health checks that succeeded over, say, the
+last 24h — while `lastHealthCheck` (REST API and the dashboard's status
+dot only) is the single most recent check's result. A server that was
+flaky yesterday but has been fine for the last hour has a middling
+`reachabilityRate` and a `lastHealthCheck.success` of `true` — the fleet
+dashboard's live status dot deliberately uses the latter, since "is it up
+right now" is a different question than "how has it been over the last
+day," and conflating them would make a recovered server look falsely
+degraded on the one view meant to show current state at a glance.
+
 ## Health scoring
 
 Implemented in `packages/core/src/health-score.ts`, given a window of

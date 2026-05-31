@@ -20,7 +20,7 @@ is what CI type-checks against.
 
 ## What's covered
 
-As of this writing: **104 tests, 0 failing**, across every package.
+As of this writing: **125 tests, 0 failing**, across every package.
 
 | Package | What's tested |
 |---|---|
@@ -28,7 +28,8 @@ As of this writing: **104 tests, 0 failing**, across every package.
 | `storage` | Every `ReliabilityStore` method round-tripped through real SQLite (`:memory:`), including upsert idempotency, cascading deletes, time/tool-name filtering on executions, and foreign-key enforcement. |
 | `collector` | The JSON-RPC framer (chunked messages, multiple messages per chunk, malformed-line handling) in isolation; `HealthChecker` and `StdioProxyCollector` **against the real reference MCP server as an actual child process** — not mocked — covering tool listing, successful and failing (isError) tool calls, schema-drift detection across two sessions, and an unreachable-server case. |
 | `cli` | Pure logic extracted for testability: duration parsing, shell-like tokenizing, slugify, transport resolution (`add-server`'s mutually-exclusive-flags logic), the unreachable-alert open/resolve/no-duplicate state machine, and `buildServerReport`'s reachability/health-score separation. |
-| `server` | Every REST endpoint via Hono's in-process `app.request()`, including the 404 cases and the transport-secret redaction. |
+| `server` | Every REST endpoint via Hono's in-process `app.request()`, including the 404 cases, transport-secret redaction, the batch `health-summary` endpoint, and the dashboard static-file mounting helper (built vs. not-built, and asset serving) against a real temp directory. |
+| `dashboard` | Pure logic only: formatting/threshold helpers (mirrored against the CLI's exact score/severity bands) and the client-side per-tool aggregation logic. No component-rendering tests yet — see "what's not covered" below. |
 
 ### Why integration tests spawn a real process
 
@@ -54,6 +55,13 @@ client → proxy → child → proxy → client round trip is exercised for real
   logic each delegates to is. A full CLI-process integration test (spawn
   `mcp-reliable`, assert on stdout) is a reasonable addition once the
   command surface stabilizes further.
+- The dashboard has no component-rendering tests (no `@testing-library/react`
+  + jsdom setup) — only its pure logic (formatting, thresholds, client-side
+  aggregation) is unit tested. The build itself is verified by actually
+  running `vite build` and serving the output (see the manual verification
+  notes in `docs/decisions/0008-dashboard-stack-and-duplication.md`'s
+  surrounding development), but there's no automated regression check that,
+  say, `FleetOverview` still renders a row per server after a refactor.
 - SSE and streamable-HTTP transports have no integration test (no
   reference server implementing them yet) — only `stdio` is exercised
   end-to-end today.

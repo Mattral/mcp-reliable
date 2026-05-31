@@ -122,15 +122,37 @@ schemas, which is exactly what the collector integration tests do
 (`packages/collector/test/health-checker.test.ts`) if you want to see the
 detector fire in a controlled way right now.
 
-## 7. Run the REST API
+## 7. Run the REST API and dashboard
+
+The dashboard is optional — build it once if you want it (part of the root
+`npm run build`, or standalone):
+
+```
+cd packages/dashboard && npm run build && cd ../..
+```
+
+Then start the server either way:
 
 ```
 node packages/server/dist/index.js
 ```
 
+With the dashboard built:
+
 ```
 mcp-reliable server listening on http://localhost:4317 (db: ./.mcp-reliable/data.sqlite)
+Dashboard: http://localhost:4317/
 ```
+
+Open `http://localhost:4317/` for the fleet overview (a live, clickable
+version of what `mcp-reliable servers`/`monitor` prints in the terminal),
+or `http://localhost:4317/#/servers/reference` directly for the detail
+page — health history, per-tool breakdown, drift/alerts, and a recent-
+executions log. See [`dashboard-design.md`](./dashboard-design.md) for
+what's there and what isn't yet.
+
+Without the dashboard built, the log line says so and the REST API still
+works on its own:
 
 ```
 curl http://localhost:4317/api/servers
@@ -138,6 +160,4 @@ curl http://localhost:4317/api/servers/reference/health
 curl "http://localhost:4317/api/servers/reference/executions?tool=echo"
 ```
 
-See [`api-reference.md`](./api-reference.md) for the full endpoint list —
-this is the foundation the web dashboard (not yet built — see
-`dashboard-design.md`) will sit on top of.
+See [`api-reference.md`](./api-reference.md) for the full endpoint list.

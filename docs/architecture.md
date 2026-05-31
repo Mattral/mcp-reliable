@@ -16,7 +16,8 @@ there are no cycles.
 @mcp-reliable/storage     SQLite persistence, implements the ReliabilityStore interface
 @mcp-reliable/collector   HealthChecker (pull) + StdioProxyCollector (traffic-observing)
 @mcp-reliable/cli         `mcp-reliable` command-line tool
-@mcp-reliable/server      REST API over stored data (foundation for the dashboard/agent interface)
+@mcp-reliable/server      REST API over stored data, and serves the built dashboard as static assets
+@mcp-reliable/dashboard   React + Tailwind web dashboard (fleet overview + server detail), built to static assets consumed by @mcp-reliable/server
 examples/reference-mcp-server   a tiny 3-tool stdio MCP server used by tests and the getting-started guide
 ```
 
@@ -146,16 +147,17 @@ themselves, and [`decisions/0005-health-score-formula.md`](./decisions/0005-heal
 for the reasoning behind the formula (including a real bug found and fixed
 during development — see that ADR's "Revision" section).
 
-## REST API
+## REST API and dashboard
 
 `@mcp-reliable/server` wraps a `ReliabilityStore` in a small Hono app
 (`packages/server/src/app.ts`) exposing servers, tools, executions, drift
-events, health scores, and alerts as JSON over HTTP. It is intentionally the
-*only* consumer-facing surface that doesn't yet exist as a polished product
-— there is no web dashboard yet (see
-[`dashboard-design.md`](./dashboard-design.md) for the plan) and no
-agent-facing MCP interface yet (P1 in the roadmap). The REST API is the
-foundation both will be built on, and is fully implemented and tested today.
+events, health scores, and alerts as JSON over HTTP, plus a batch
+`GET /api/servers/health-summary` for the dashboard's fleet view. The same
+process also serves `@mcp-reliable/dashboard`'s built static assets
+(`packages/server/src/static.ts`, mounted only if the dashboard has been
+built — the API works standalone otherwise). There is still no
+agent-facing MCP interface exposing this data as MCP tools (P1 in the
+roadmap) — the REST API is what that would be built on top of.
 
 ## Security posture (spec §11)
 

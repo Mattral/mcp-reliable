@@ -1,98 +1,92 @@
-# Web Dashboard — Design Doc (not yet implemented)
+# Web Dashboard
 
-Status: **planned, not built**. This document exists so the next milestone
-starts from a real design rather than a blank page — see
-[`roadmap.md`](./roadmap.md) for where this sits relative to everything
-else. Everything below is a proposal; treat it as a starting point for
-implementation, not a description of shipped behavior.
+Status: **implemented** (`packages/dashboard`). This document was originally
+written as a pre-implementation design doc; it's kept below (lightly
+edited) as the record of what was planned, followed by what actually
+shipped and where it deviated. See [`roadmap.md`](./roadmap.md) for how
+this fits against everything else, and
+[`decisions/0008-dashboard-stack-and-duplication.md`](./decisions/0008-dashboard-stack-and-duplication.md)
+for the specific technical decisions (stack deviation, hash routing,
+type/logic duplication) in ADR form.
 
-## Why this is next
+## What shipped
 
-The spec lists a "Basic web dashboard" under P0 ("View current health and
-recent executions"). Every other P0 item is implemented; this is the one
-piece of P0 not yet built, specifically because it's a genuinely different
-kind of work (frontend, not data/protocol engineering) and benefited from
-having the REST API it depends on fully built and stable first — which is
-now the case (`api-reference.md`).
+- `packages/dashboard`: a Vite + React 19 + Tailwind v4 single-page app,
+  built to static assets and served by `@mcp-reliable/server` at `/` —
+  exactly the "no new process" goal below. Run `npm run build` (root, or
+  specifically in `packages/dashboard`) then
+  `node packages/server/dist/index.js`; the server logs whether it found a
+  built dashboard to serve.
+- **Fleet overview** (`/`): a dense, terminal-styled status list (not a
+  card grid — see the ADR for why), one row per server: status dot, name,
+  health score, reachability, p95 latency, drift count. Polls
+  `GET /api/servers/health-summary` (the batch endpoint proposed below —
+  built) every 15s. Clicking a row navigates to its detail page.
+- **Server detail** (`/#/servers/:id`): status + transport + tags header, a
+  large monospace health-score readout with a colored underline (the
+  signature element, deliberately not a circular gauge), a health-history
+  line chart (recharts), a per-tool breakdown table, a combined drift+alert
+  timeline, and a terminal-log-styled recent-executions list.
+- Visual identity is grounded in the CLI's existing terminal aesthetic
+  (dark canvas, monospace-forward type for data, the same green/amber/red
+  score thresholds as `packages/cli/src/format.ts`) rather than a generic
+  dashboard template — see the ADR for the full token system.
+- Routing is hash-based (`/#/servers/xyz`), specifically so the server
+  needs no SPA-fallback route — every request it sees is either `/` or a
+  real static asset.
+- The `ServerDetail` route (and its `recharts` dependency) is code-split via
+  `React.lazy`, so the more frequently visited fleet overview loads a
+  ~77KB gzipped bundle rather than pulling in the charting library it
+  doesn't need.
 
-## Goals
+## Deviations from the original plan (below)
+
+- **Stack**: shadcn/ui was proposed; hand-rolled Tailwind components
+  shipped instead — see the ADR (same category of reasoning as the CLI's
+  Ink deviation, ADR 0004, plus the shadcn CLI needing registry network
+  access this environment didn't have).
+- **Data model reuse**: the plan didn't anticipate that `@mcp-reliable/core`
+  isn't browser-safe as a whole (`fingerprint.ts` imports `node:crypto`).
+  The dashboard declares its own mirrored types and re-implements the score/
+  severity color thresholds rather than importing `core` directly — see the
+  ADR.
+- **`lastHealthCheck`**: added to the health-summary/health responses
+  beyond what was originally scoped — the fleet view's status dot needed
+  "is it reachable *right now*" (the latest check), which is different
+  from `reachabilityRate` (a 24h aggregate); see
+  `data-model.md#health-vs-reachability` for why these stay separate
+  fields rather than being collapsed into one.
+
+## Original design goals
 
 - A single human, glancing at one screen, should be able to tell: which
   servers are healthy, which aren't, and whether anything just started
   drifting.
 - Zero additional setup beyond what's already required to run the REST API
-  (`node packages/server/dist/index.js`) — the dashboard should be static
-  assets the same server can serve, not a second process to run.
+  — the dashboard is static assets the same server serves, not a second
+  process to run.
 - Read-only for v1 (no server registration/removal from the UI — that
-  stays a CLI action, at least initially, consistent with "Developer Joy"
-  favoring a fast CLI loop over clicking through forms for setup).
+  stays a CLI action, consistent with "Developer Joy" favoring a fast CLI
+  loop over clicking through forms for setup). Still true as shipped.
 
-## Proposed stack
+## API additions proposed here — status
 
-Per the original spec's technical stack table: **React + Tailwind +
-shadcn/ui**, built with Vite, served as static files by the existing Hono
-app (`app.get('/*', serveStatic(...))` from `@hono/node-server/serve-static`,
-added alongside the existing `/api/*` routes in `packages/server/src/app.ts`
-— no new process).
-
-## Proposed views
-
-### 1. Fleet overview (`/`)
-
-A card or table per registered server: name, a colored status dot (green/
-yellow/red, same thresholds as `formatScore` in the CLI —
-`colorForScore` in `packages/cli/src/format.ts` — reused here for visual
-consistency between the CLI and the dashboard), current tool health score,
-reachability, and a small badge if there's an unresolved alert or recent
-drift. Sourced from `GET /api/servers` + one `GET /api/servers/:id/health`
-call per server (or a new batch endpoint — see "API additions needed"
-below).
-
-### 2. Server detail (`/servers/:id`)
-
-- Header: name, transport summary (redacted, same as the API), tags.
-- Health score over time: a line chart from `GET /api/servers/:id/health-history`.
-  This is the first UI consumer of the `health_scores` table that
-  `buildServerReport`/the `/health` endpoint have been populating since
-  P0 — see `data-model.md#healthscore`.
-- Per-tool breakdown: success rate and p95 latency per tool name, computed
-  client-side from `GET /api/servers/:id/executions` (or a new
-  server-side aggregation endpoint if the executions list gets large
-  enough that shipping every row to the browser stops being reasonable —
-  see below).
-- Recent executions table: timestamp, tool, duration, success/fail,
-  truncated output signature.
-- Drift timeline: `GET /api/servers/:id/drift`, newest first, colored by
-  severity (reusing `formatSeverity`'s color mapping).
-- Alerts: `GET /api/servers/:id/alerts`, with a manual "mark resolved"
-  action once a `PATCH`/`POST` endpoint exists for it (today, alerts only
-  auto-resolve via `monitor`'s reconciliation loop — see
-  `data-model.md#alert`).
-
-## API additions needed before/alongside the dashboard
-
-The REST API as it stands (`api-reference.md`) is sufficient to build the
-above, but two additions would make the fleet overview meaningfully more
-efficient once there's more than a handful of servers:
-
-1. `GET /api/servers/health-summary` — health for *every* server in one
-   call, instead of N calls to `/api/servers/:id/health`.
+1. `GET /api/servers/health-summary` — **built**. Health (+ `lastHealthCheck`,
+   unresolved alert count, recent drift count) for every server in one call.
 2. Per-tool aggregation server-side (`GET /api/servers/:id/tools/:name/health`
-   or similar) rather than shipping raw executions to the browser to
-   aggregate client-side, once execution volume is high enough to matter.
+   or similar) — **not built**. The shipped `ToolBreakdownTable` aggregates
+   client-side from a sample of recent executions
+   (`packages/dashboard/src/lib/tool-stats.ts`), which is fine up to a few
+   hundred calls and not a substitute for real server-side aggregation once
+   traffic volume grows — tracked in `roadmap.md`.
 
-Neither blocks starting the dashboard; both are worth doing before treating
-the fleet-overview page as "production-grade" for anything beyond a
-handful of servers.
+## Explicit non-goals (still true as shipped)
 
-## Explicit non-goals for v1
-
-- Multi-user auth / RBAC (P2 in the original spec: "Team features:
-  Sharing, RBAC, and collaboration (later stage)").
-- Editing alert rules or drift thresholds from the UI (the health-score
-  weights and drift-dominance thresholds are currently code-level defaults
-  in `@mcp-reliable/core` — see `decisions/0005-health-score-formula.md`).
-- Real-time push updates (polling the REST API on an interval is
-  sufficient for v1; a WebSocket/SSE live feed is a reasonable later
-  addition once the static-view dashboard exists and someone's actually
-  asked for it).
+- Multi-user auth / RBAC (P2 in the original spec).
+- Editing alert rules or drift thresholds from the UI (still code-level
+  defaults in `@mcp-reliable/core` — see
+  `decisions/0005-health-score-formula.md`).
+- Real-time push updates (15s polling, not a WebSocket/SSE live feed — a
+  reasonable later addition if someone actually asks for it).
+- Registering/removing servers from the UI (CLI-only, by design — see goals
+  above).

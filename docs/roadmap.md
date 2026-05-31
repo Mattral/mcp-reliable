@@ -17,7 +17,7 @@ Legend: ✅ done and tested · 🚧 partially done · ⬜ not started
 | Clean CLI (`monitor`, `report`, `add-server`) | ✅ | Plus `init`, `servers`, `remove-server`, `proxy` (needed to actually generate real traffic data — see `architecture.md#collection-model`). |
 | Local-first storage (SQLite, zero config) | ✅ | `SqliteStore`, `.mcp-reliable/data.sqlite` convention. |
 | stdio + SSE support | 🚧 | `HealthChecker` supports stdio/SSE/HTTP for pull-based checks. The traffic-observing proxy (`StdioProxyCollector`) supports **stdio only** — an SSE/HTTP proxy is a materially different problem (there's no "child process" to sit in front of) and isn't built yet. |
-| Basic web dashboard | ⬜ | Design complete (`dashboard-design.md`); not implemented. The REST API it depends on is fully built and tested. |
+| Basic web dashboard | ✅ | `packages/dashboard` — fleet overview + server detail, served as static assets by `@mcp-reliable/server`. See `dashboard-design.md` for what shipped vs. the original plan, and `decisions/0008-dashboard-stack-and-duplication.md` for the implementation decisions. |
 
 ## P1 — Production Readiness
 
@@ -26,10 +26,10 @@ Legend: ✅ done and tested · 🚧 partially done · ⬜ not started
 | Behavioral drift detection (statistical comparison) | ⬜ | P0 shipped a structural (shape-only) detector; true statistical comparison of output *values* or latency *distributions* is not built — see `decisions/0007-drift-detection-v0-scope.md`. |
 | Token usage tracking | ⬜ | `Execution.inputBytes`/`outputBytes` are byte-size proxies, explicitly not token counts (see `data-model.md#execution`) — real token tracking needs a tokenizer matched to the calling agent's model, which mcp-reliable has no way to know today. |
 | Error classification | ⬜ | `Execution.errorMessage` is stored verbatim; there's no grouping/clustering of common failure modes yet. |
-| Multi-server fleet view | 🚧 | `servers`/`monitor`/`report` all operate over every registered server already; there's no dashboard fleet view yet (see P0 dashboard gap above). |
-| Webhook + Slack alerting | ⬜ | `Alert` records are created/resolved (`reconcileUnreachableAlert`) and queryable via the REST API and would back this, but no outbound webhook/Slack integration exists yet. |
+| Multi-server fleet view | ✅ | The dashboard's fleet overview (`/`) lists every registered server with live status; `servers`/`monitor`/`report` also already operate over every registered server. |
+| Webhook + Slack alerting | ⬜ | `Alert` records are created/resolved (`reconcileUnreachableAlert`) and queryable via the REST API and the dashboard's drift/alerts panel; no outbound webhook/Slack integration exists yet. |
 | Full MCP interface (agents can query health/drift) | ⬜ | The REST API (`api-reference.md`) has everything an MCP tool wrapper would need to call into; the MCP-facing tool surface itself isn't built. |
-| Historical trends | 🚧 | Data model and persistence exist (`HealthScore` snapshots via `recordHealthScore`/`listHealthScores`, exercised by every `report` run and by `/api/servers/:id/health-history`); there's no chart/UI consuming it yet (planned in `dashboard-design.md`). |
+| Historical trends | ✅ | `HealthScore` snapshots (`recordHealthScore`/`listHealthScores`) now have a consumer: the dashboard's health-history line chart (`GET /api/servers/:id/health-history`), populated by every `report` run or `/health` call. |
 
 ## P2 — Advanced Capabilities
 
@@ -66,6 +66,14 @@ engine, OpenTelemetry exporter, ML-based anomaly detection, team features
   for comparing two schema versions of the same server id — the
   getting-started guide's drift demo works around this by registering a
   second server id instead (see `getting-started.md` step 6).
+- The dashboard's per-tool breakdown table aggregates client-side from a
+  sample of recent executions rather than a dedicated server-side
+  aggregation endpoint — fine up to a few hundred calls, not built for
+  scale yet (see `dashboard-design.md`'s API-additions status).
+- The dashboard uses hash-based routing (`/#/servers/:id`) rather than
+  clean path-based URLs, a deliberate tradeoff to avoid needing SPA
+  fallback routing in `@mcp-reliable/server` — see
+  `decisions/0008-dashboard-stack-and-duplication.md`.
 - The `cli` and `server` packages each independently resolve the DB path
   convention (small, deliberate duplication — see
   `decisions/0006-server-config-duplication.md`), which is worth revisiting

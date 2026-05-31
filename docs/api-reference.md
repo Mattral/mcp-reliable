@@ -42,18 +42,46 @@ Liveness check for the API process itself (not any monitored MCP server).
 { "tools": [ { "id": "...", "serverId": "...", "name": "echo", "schemaFingerprint": "...", "inputSchema": {...}, "firstSeenAt": 0, "lastSeenAt": 0 } ] }
 ```
 
+## `GET /api/servers/health-summary?windowMs=<ms>`
+
+Health for every registered server in one call — what the dashboard's
+fleet overview polls every 15s. Same fields as `/api/servers/:id/health`
+below, plus the (redacted) `server` object and per-server alert/drift
+counts, for each server.
+
+```json
+{
+  "servers": [
+    {
+      "server": { "id": "...", "name": "...", "...": "redacted transport, as above" },
+      "windowStart": 0,
+      "windowEnd": 0,
+      "reachabilityRate": 1,
+      "lastHealthCheck": { "success": true, "at": 0 },
+      "healthScore": { "score": 92.4, "...": "..." },
+      "unresolvedAlertCount": 0,
+      "recentDriftCount": 0
+    }
+  ]
+}
+```
+
 ## `GET /api/servers/:id/health?windowMs=<ms>`
 
 `windowMs` defaults to 24 hours. Computes reachability from health-check
 executions and a tool health score from proxy-observed executions in the
 trailing window — see `data-model.md#health-vs-reachability` for why these
 are two separate, possibly-null fields rather than one number.
+`lastHealthCheck` is the single most recent health check regardless of the
+window (so a fleet view's status dot can show "reachable right now" even
+when `reachabilityRate` reflects a rockier last 24h).
 
 ```json
 {
   "windowStart": 0,
   "windowEnd": 0,
   "reachabilityRate": 1,
+  "lastHealthCheck": { "success": true, "at": 0 },
   "healthScore": {
     "serverId": "...",
     "windowStart": 0,
@@ -64,12 +92,15 @@ are two separate, possibly-null fields rather than one number.
     "p95LatencyMs": 210,
     "errorRate": 0.02,
     "sampleCount": 134
-  }
+  },
+  "unresolvedAlertCount": 0,
+  "recentDriftCount": 0
 }
 ```
 
 `reachabilityRate` and `healthScore` are `null` (not omitted) when there's
 no data of that kind in the window — see `data-model.md#health-vs-reachability`.
+`lastHealthCheck` is `null` if no health check has ever run for this server.
 
 ## `GET /api/servers/:id/health-history?sinceMs=<epoch ms>`
 
@@ -106,6 +137,9 @@ Query params: `tool` (filter by tool name), `sinceMs`, `untilMs`, `limit`
 
 - Write endpoints (register/remove a server over HTTP — today that's
   CLI-only).
+- Per-tool server-side aggregation (the dashboard computes this
+  client-side from a sample of executions today — see
+  `dashboard-design.md`).
 - Authentication / API keys.
 - An agent-facing MCP interface exposing this same data as MCP tools
   (P1 in the spec's roadmap — "Full MCP interface: Agents can query health,
