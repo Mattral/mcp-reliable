@@ -26,11 +26,14 @@ planned. This README is the fast path to running it.
 - **A REST API** — everything above, queryable over HTTP, redacting secrets
   from any transport config it returns. See
   [`docs/api-reference.md`](./docs/api-reference.md).
+- **A web dashboard** — a fleet overview and per-server detail page (health
+  history, tool breakdown, drift/alerts, execution log), served as static
+  assets by the same REST API process. See
+  [`docs/dashboard-design.md`](./docs/dashboard-design.md).
 - **SQLite storage**, zero config, one file per project.
 
-Not yet built: the web dashboard (design is done —
-[`docs/dashboard-design.md`](./docs/dashboard-design.md) — implementation
-isn't) and the P1/P2 items in [`docs/roadmap.md`](./docs/roadmap.md)
+Not yet built: SSE/HTTP support in the traffic-observing proxy, and the
+rest of the P1/P2 items in [`docs/roadmap.md`](./docs/roadmap.md)
 (statistical drift detection, token tracking, webhook/Slack alerting, an
 agent-facing MCP interface, and more).
 
@@ -43,7 +46,7 @@ git clone <this-repo>
 cd mcp-reliable
 npm install
 npm run build
-npm test   # 100+ tests, none of them mocked at the protocol level — see docs/testing.md
+npm test   # 125+ tests, none of them mocked at the protocol level — see docs/testing.md
 ```
 
 Then walk through [`docs/getting-started.md`](./docs/getting-started.md),
@@ -67,7 +70,8 @@ packages/core        pure data model, health scoring, drift detection (no I/O)
 packages/storage      SQLite persistence behind a storage-agnostic interface
 packages/collector    health checks + the traffic-observing stdio proxy
 packages/cli          the mcp-reliable command-line tool
-packages/server       REST API over stored data
+packages/server       REST API over stored data, serves the built dashboard
+packages/dashboard    React + Tailwind web dashboard (fleet overview + server detail)
 examples/             a tiny reference MCP server used by tests and the getting-started guide
 docs/                 architecture, data model, CLI/API reference, ADRs, roadmap
 ```

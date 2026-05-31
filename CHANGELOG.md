@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.2.0 — Web dashboard
+
+Closes the one remaining P0 gap from 0.1.0. See
+[`docs/roadmap.md`](./docs/roadmap.md) for full status.
+
+**Added**
+
+- `@mcp-reliable/dashboard` — a Vite + React 19 + Tailwind v4 web
+  dashboard: a fleet overview (dense, terminal-styled status list) and a
+  per-server detail page (health-score readout, health-history chart,
+  per-tool breakdown, drift/alert timeline, recent-executions log). Visual
+  identity is grounded in the CLI's existing terminal aesthetic rather
+  than a generic dashboard template — see
+  `docs/decisions/0008-dashboard-stack-and-duplication.md`.
+- `@mcp-reliable/server`: a new `GET /api/servers/health-summary` batch
+  endpoint (health for every server in one call), a `lastHealthCheck`
+  field distinguishing "reachable right now" from the windowed
+  `reachabilityRate`, and static-file serving for the built dashboard
+  (`packages/server/src/static.ts`), with graceful degradation if the
+  dashboard hasn't been built.
+- 21 new tests (104 → 125): the new REST endpoint and static-mounting
+  helper, and the dashboard's formatting/threshold and per-tool
+  aggregation logic.
+- ADR 0008 documenting the dashboard's stack deviation (hand-rolled
+  Tailwind over shadcn/ui — its CLI needs registry network access this
+  environment doesn't allow), hash-based routing (avoids needing SPA
+  fallback middleware), and the browser/Node type-duplication decision
+  (`@mcp-reliable/core` isn't browser-safe as a whole, since
+  `fingerprint.ts` imports `node:crypto`).
+
+**Known gaps carried forward:** per-tool aggregation is still client-side
+only (no dedicated server-side endpoint), no component-rendering tests for
+the dashboard, SSE/HTTP still unsupported by the traffic-observing proxy.
+See `docs/roadmap.md`.
+
 ## 0.1.0 — Initial P0 foundation
 
 First implementation pass against `mcp-reliable-project-spec.md`. See
