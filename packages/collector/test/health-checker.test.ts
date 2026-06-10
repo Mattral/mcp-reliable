@@ -1,14 +1,10 @@
-import { fileURLToPath } from "node:url";
-import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "@mcp-reliable/core";
 import { SqliteStore } from "@mcp-reliable/storage";
 import { HealthChecker, HEALTH_CHECK_TOOL_NAME } from "../src/health-checker.js";
+import { ensureReferenceServerBuilt } from "./helpers/ensure-reference-server-built.js";
 
-const referenceServerPath = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../../examples/reference-mcp-server/src/index.ts"
-);
+const referenceServerPath = ensureReferenceServerBuilt();
 
 function makeServer(overrides: Partial<Server> = {}): Server {
   return {

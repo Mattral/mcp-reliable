@@ -1,16 +1,12 @@
-import { fileURLToPath } from "node:url";
-import path from "node:path";
 import { PassThrough } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SqliteStore } from "@mcp-reliable/storage";
 import { StdioProxyCollector } from "../src/proxy-collector.js";
 import { StreamPairTransport } from "./helpers/stream-pair-transport.js";
+import { ensureReferenceServerBuilt } from "./helpers/ensure-reference-server-built.js";
 
-const referenceServerPath = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../../examples/reference-mcp-server/src/index.ts"
-);
+const referenceServerPath = ensureReferenceServerBuilt();
 
 async function setUpProxiedClient(serverId: string, store: SqliteStore, env?: Record<string, string>) {
   // clientToProxy: the fake client writes requests here; the proxy reads them as `input`.
