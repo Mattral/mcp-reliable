@@ -5,12 +5,12 @@
   "description": "A tiny stdio MCP server used to exercise mcp-reliable's collector, and as a getting-started demo target",
   "type": "module",
   "bin": {
-    "reference-mcp-server": "./src/index.ts"
+    "reference-mcp-server": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc -b",
     "clean": "rimraf dist *.tsbuildinfo",
-    "start": "node src/index.ts"
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

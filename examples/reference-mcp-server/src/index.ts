@@ -12,10 +12,18 @@
  * input schema — this simulates the kind of change that
  * mcp-reliable's drift detector is built to catch. See docs/getting-started.md.
  *
- * This file intentionally avoids TypeScript constructor parameter
- * properties, enums, and namespaces so it can be executed directly via
- * `node src/index.ts` (Node's built-in type-stripping) with no build step —
- * both in mcp-reliable's own collector tests and for anyone trying the demo.
+ * This file avoids TypeScript constructor parameter properties, enums,
+ * and namespaces. That was originally so it could be run directly via
+ * `node src/index.ts` with no build step, using Node's built-in
+ * TypeScript type-stripping — but that feature is Node 22.6+ only, and
+ * this project supports Node 20+ (see the root package.json `engines`
+ * and CI matrix), so every real usage (the CLI examples, the getting-
+ * started guide, and the test suite) now runs the *built* `dist/index.js`
+ * instead. The syntax restriction is kept anyway, at no real cost, since
+ * it's a trivial constraint for a 3-tool demo server and it means this
+ * file remains directly runnable via `node src/index.ts` too, for anyone
+ * on Node 22.6+ who wants to skip the build step during quick manual
+ * testing. See docs/decisions/0009-reference-server-must-be-built-for-tests.md.
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
