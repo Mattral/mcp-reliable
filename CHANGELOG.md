@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.1 — Fix: Node 20 CI failure (reference server spawned as unbuilt .ts)
+
+Caught by CI on the Node 20.x matrix job. See
+[`docs/decisions/0009-reference-server-must-be-built-for-tests.md`](./docs/decisions/0009-reference-server-must-be-built-for-tests.md)
+for the full account.
+
+**Fixed**
+
+- The collector's integration tests, the reference server's own `bin`/
+  `start` entries, and every CLI/getting-started example spawning the
+  reference server now use its **built** `dist/index.js` instead of
+  `src/index.ts` directly. The original approach relied on Node's
+  built-in TypeScript type-stripping, which only exists on Node 22.6+ —
+  this project supports Node 20+ (per its own `package.json` engines
+  field and CI matrix), and Node 20 crashed outright
+  (`ERR_UNKNOWN_FILE_EXTENSION`) trying to load a `.ts` file as a child
+  process, failing all 7 affected tests (5 in `proxy-collector.test.ts`,
+  2 in `health-checker.test.ts`) on that Node version.
+- Added `packages/collector/test/helpers/ensure-reference-server-built.ts`,
+  which builds the reference server once, lazily, the first time an
+  integration test needs it — preserving the "`npm test` needs no manual
+  build first" property for every other package.
+
 ## 0.2.0 — Web dashboard
 
 Closes the one remaining P0 gap from 0.1.0. See
