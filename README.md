@@ -56,7 +56,7 @@ external to stand up first:
 ```bash
 node packages/cli/dist/index.js init
 node packages/cli/dist/index.js add-server \
-  --name reference --stdio -- node examples/reference-mcp-server/src/index.ts
+  --name reference --stdio -- node examples/reference-mcp-server/dist/index.js
 node packages/cli/dist/index.js monitor --server reference --once
 ```
 

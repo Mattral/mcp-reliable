@@ -29,7 +29,7 @@ installed it globally, substitute `node packages/cli/dist/index.js`, or
 ## 2. Register the reference server
 
 ```
-mcp-reliable add-server --name reference --stdio -- node examples/reference-mcp-server/src/index.ts
+mcp-reliable add-server --name reference --stdio -- node examples/reference-mcp-server/dist/index.js
 ```
 
 ## 3. Check it's alive
@@ -58,7 +58,7 @@ randomized latency, specifically so there's something interesting to see
 here. Point any MCP client at the proxy instead of the server directly:
 
 ```
-mcp-reliable proxy reference -- node examples/reference-mcp-server/src/index.ts
+mcp-reliable proxy reference -- node examples/reference-mcp-server/dist/index.js
 ```
 
 Point your agent/IDE's MCP server launch config at that command (see
@@ -97,7 +97,7 @@ Run a health check against the "v2" version of the same server id:
 
 ```
 mcp-reliable remove-server reference   # start clean for the demo
-mcp-reliable add-server --name reference --stdio -- node examples/reference-mcp-server/src/index.ts
+mcp-reliable add-server --name reference --stdio -- node examples/reference-mcp-server/dist/index.js
 mcp-reliable monitor --server reference --once      # baseline: records today's schema
 
 # Now simulate the server being deployed with a changed API:
@@ -111,7 +111,7 @@ with the collector library, or register a second server pointed at the
 same command with the env var baked into its transport:
 
 ```
-mcp-reliable add-server --name reference-v2 --stdio -- env MCP_RELIABLE_DEMO_MODE=v2 node examples/reference-mcp-server/src/index.ts
+mcp-reliable add-server --name reference-v2 --stdio -- env MCP_RELIABLE_DEMO_MODE=v2 node examples/reference-mcp-server/dist/index.js
 mcp-reliable monitor --server reference-v2 --once
 ```
 

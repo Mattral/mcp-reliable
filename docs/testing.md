@@ -18,6 +18,14 @@ output. This keeps the inner test loop fast and independent of build order.
 produces the real `dist/` output the CLI and server actually run from, and
 is what CI type-checks against.
 
+One documented exception: `examples/reference-mcp-server` is spawned as a
+real OS process by the collector's integration tests, so it can't use the
+alias trick above (there's no `import` to alias). The test suite builds it
+itself, once, the first time it's needed — see
+["Why integration tests spawn a real process"](#why-integration-tests-spawn-a-real-process)
+below. This adds a few seconds to the first collector test that runs it,
+not a manual step.
+
 ## What's covered
 
 As of this writing: **125 tests, 0 failing**, across every package.
@@ -34,19 +42,26 @@ As of this writing: **125 tests, 0 failing**, across every package.
 ### Why integration tests spawn a real process
 
 `HealthChecker` and `StdioProxyCollector` are tested against
-`examples/reference-mcp-server` run as an actual `node` child process (Node
-22's built-in TypeScript type-stripping runs `src/index.ts` directly, no
-build step needed for this specific file — see the comment at the top of
-that file for the resulting constraint on its syntax: no constructor
-parameter properties, enums, or namespaces). This was a deliberate choice
-over mocking the MCP SDK's `Client`/transport internals: the whole point of
-the collector package is correctly speaking the real wire protocol, and a
-hand-rolled mock of that protocol would risk testing the mock's model of
-MCP rather than mcp-reliable's actual behavior against it. The proxy tests
-go one step further and drive a real SDK `Client` through a custom
-in-memory `Transport` (`packages/collector/test/helpers/stream-pair-transport.ts`)
-piped into the proxy's `input`/`output` stream options, so the full
-client → proxy → child → proxy → client round trip is exercised for real.
+`examples/reference-mcp-server` run as an actual `node` child process. This
+was a deliberate choice over mocking the MCP SDK's `Client`/transport
+internals: the whole point of the collector package is correctly speaking
+the real wire protocol, and a hand-rolled mock of that protocol would risk
+testing the mock's model of MCP rather than mcp-reliable's actual behavior
+against it. The proxy tests go one step further and drive a real SDK
+`Client` through a custom in-memory `Transport`
+(`packages/collector/test/helpers/stream-pair-transport.ts`) piped into the
+proxy's `input`/`output` stream options, so the full client → proxy → child
+→ proxy → client round trip is exercised for real.
+
+Spawning a real process means this is the one place in the test suite that
+can't use vitest's src-aliasing (see above) — a spawned OS process is never
+`import`ed, so there's no module resolution to alias. The tests build the
+reference server once, lazily, via a shared helper
+(`packages/collector/test/helpers/ensure-reference-server-built.ts`) and
+spawn the compiled `dist/index.js`, rather than the `.ts` source directly.
+This wasn't the original design — see
+[`decisions/0009-reference-server-must-be-built-for-tests.md`](./decisions/0009-reference-server-must-be-built-for-tests.md)
+for what broke and why.
 
 ### What's not covered yet
 
