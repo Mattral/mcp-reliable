@@ -1,17 +1,24 @@
 import { randomUUID } from "node:crypto";
 import chalk from "chalk";
 import Table from "cli-table3";
-import type { Server } from "@mcp-reliable/core";
+import type { Alert, DriftEvent, HealthDegradationThresholds, Server } from "@mcp-reliable/core";
+import { DEFAULT_HEALTH_DEGRADATION_THRESHOLDS, detectHealthDegradation, driftEventToAlert } from "@mcp-reliable/core";
 import { HealthChecker, type HealthCheckResult } from "@mcp-reliable/collector";
 import type { ReliabilityStore } from "@mcp-reliable/storage";
+import { createNotifier, type Notifier } from "@mcp-reliable/notifier";
 import { openStore } from "../config.js";
 import { CliError, withFriendlyErrors } from "../errors.js";
 import { formatMs } from "../format.js";
+import { buildServerReport } from "./report.js";
 
 export interface MonitorOptions {
   server?: string;
   once?: boolean;
   interval?: string;
+  /** Trailing window (ms) used to compute the health score checked for degradation. Default 1h. */
+  window?: string;
+  webhook?: string;
+  slackWebhook?: string;
   db?: string;
 }
 
@@ -31,29 +38,125 @@ export async function runOneMonitorPass(
   return Promise.all(servers.map((server) => checker.check(server)));
 }
 
+export interface AlertReconciliation {
+  /** A newly opened alert this call produced, if any. */
+  opened: Alert | null;
+  /** Any previously-open alerts this call resolved. */
+  resolved: Alert[];
+}
+
 /**
  * Reconciles a health check result against the `unreachable` alert for a
  * server: opens one if the server just went down, resolves it if the
- * server has come back. Kept idempotent — safe to call every tick.
+ * server has come back. Kept idempotent — safe to call every tick. Returns
+ * what changed so the caller can notify on both directions (an outage
+ * *and* its recovery are both worth telling someone about).
  */
-export function reconcileUnreachableAlert(store: ReliabilityStore, server: Server, result: HealthCheckResult): void {
-  const openAlerts = store.listAlerts({ serverId: server.id, onlyUnresolved: true }).filter(
-    (a) => a.kind === "unreachable"
-  );
+export function reconcileUnreachableAlert(
+  store: ReliabilityStore,
+  server: Server,
+  result: HealthCheckResult
+): AlertReconciliation {
+  const openAlerts = store
+    .listAlerts({ serverId: server.id, onlyUnresolved: true })
+    .filter((a) => a.kind === "unreachable");
 
   if (!result.reachable && openAlerts.length === 0) {
-    store.recordAlert({
+    const alert: Alert = {
       id: randomUUID(),
       serverId: server.id,
       triggeredAt: Date.now(),
       severity: "critical",
       kind: "unreachable",
       message: result.error ? `Server unreachable: ${result.error}` : "Server unreachable"
-    });
-  } else if (result.reachable && openAlerts.length > 0) {
+    };
+    store.recordAlert(alert);
+    return { opened: alert, resolved: [] };
+  }
+
+  if (result.reachable && openAlerts.length > 0) {
+    const resolvedAt = Date.now();
     for (const alert of openAlerts) {
-      store.resolveAlert(alert.id, Date.now());
+      store.resolveAlert(alert.id, resolvedAt);
     }
+    return { opened: null, resolved: openAlerts.map((a) => ({ ...a, resolvedAt })) };
+  }
+
+  return { opened: null, resolved: [] };
+}
+
+export interface HealthDegradationReconciliation extends AlertReconciliation {
+  healthScore: ReturnType<typeof buildServerReport>["healthScore"];
+}
+
+/**
+ * Computes a fresh, trailing-window health score for a server (via
+ * `buildServerReport`, which also persists it — feeding the dashboard's
+ * history chart as a side effect of monitoring, not just of `report`
+ * runs), compares it against the previously recorded score, and opens or
+ * resolves a `health-degradation` alert accordingly. Pairs with
+ * `detectHealthDegradation` in `@mcp-reliable/core` the same way this
+ * file's `reconcileUnreachableAlert` pairs with a raw reachability check —
+ * see that function's docstring for why transition-only, band-based
+ * alerting avoids re-alerting on every tick a server stays degraded.
+ */
+export function reconcileHealthDegradationAlert(
+  store: ReliabilityStore,
+  server: Server,
+  windowMs: number,
+  thresholds: HealthDegradationThresholds = DEFAULT_HEALTH_DEGRADATION_THRESHOLDS
+): HealthDegradationReconciliation {
+  const history = store.listHealthScores(server.id);
+  const previousScore = history.length > 0 ? history[history.length - 1]?.score : undefined;
+
+  const windowEnd = Date.now();
+  const windowStart = windowEnd - windowMs;
+  const report = buildServerReport(store, server, windowStart, windowEnd);
+
+  if (!report.healthScore) {
+    return { healthScore: undefined, opened: null, resolved: [] };
+  }
+
+  const opened = detectHealthDegradation(server.id, previousScore, report.healthScore, thresholds);
+  if (opened) {
+    store.recordAlert(opened);
+  }
+
+  const resolved: Alert[] = [];
+  if (report.healthScore.score >= thresholds.warningBelow) {
+    const openAlerts = store
+      .listAlerts({ serverId: server.id, onlyUnresolved: true })
+      .filter((a) => a.kind === "health-degradation");
+    const resolvedAt = Date.now();
+    for (const alert of openAlerts) {
+      store.resolveAlert(alert.id, resolvedAt);
+      resolved.push({ ...alert, resolvedAt });
+    }
+  }
+
+  return { healthScore: report.healthScore, opened, resolved };
+}
+
+/** Converts and records an alert for every drift event a health check just found. Drift alerts have no "resolved" state — each represents a point-in-time detected change, like the underlying DriftEvent log itself. */
+export function recordDriftAlerts(store: ReliabilityStore, driftEvents: readonly DriftEvent[]): Alert[] {
+  const alerts = driftEvents.map((event) => driftEventToAlert(event));
+  for (const alert of alerts) store.recordAlert(alert);
+  return alerts;
+}
+
+/**
+ * Delivers a notification without ever letting a delivery failure crash
+ * the monitor loop — a broken webhook URL shouldn't stop mcp-reliable
+ * from doing the actual monitoring. Failures are logged, not thrown.
+ */
+async function safeNotify(notifier: Notifier | null, alert: Alert, server: Server): Promise<void> {
+  if (!notifier) return;
+  try {
+    await notifier.notify({ alert, server });
+  } catch (error) {
+    console.error(
+      chalk.dim(`  (notification delivery failed: ${error instanceof Error ? error.message : String(error)})`)
+    );
   }
 }
 
@@ -70,6 +173,12 @@ function renderTable(servers: Server[], results: Map<string, HealthCheckResult>)
     table.push([server.name, status, formatMs(result.latencyMs), String(result.toolCount), drift]);
   }
   return table.toString();
+}
+
+function printAlertLine(alert: Alert, server: Server, verb: "opened" | "resolved"): void {
+  const color = verb === "resolved" ? chalk.green : alert.severity === "critical" ? chalk.red : chalk.yellow;
+  const icon = verb === "resolved" ? "✓" : "⚠";
+  console.log(color(`${icon} [${server.name}] ${alert.message} (${verb})`));
 }
 
 export function runMonitor(options: MonitorOptions): Promise<void> {
@@ -93,27 +202,45 @@ export function runMonitor(options: MonitorOptions): Promise<void> {
       if (!Number.isFinite(intervalMs) || intervalMs <= 0) {
         throw new CliError(`--interval must be a positive number of milliseconds, got "${options.interval}".`);
       }
+      const degradationWindowMs = options.window ? Number(options.window) : 3_600_000;
+      if (!Number.isFinite(degradationWindowMs) || degradationWindowMs <= 0) {
+        throw new CliError(`--window must be a positive number of milliseconds, got "${options.window}".`);
+      }
+
+      const notifier = createNotifier({ webhookUrl: options.webhook, slackWebhookUrl: options.slackWebhook });
 
       const checker = new HealthChecker({ store });
       const results = new Map<string, HealthCheckResult>();
 
       while (true) {
         const pass = await runOneMonitorPass(servers, checker);
+        const transitions: Array<{ alert: Alert; server: Server; verb: "opened" | "resolved" }> = [];
+
         for (const result of pass) {
           results.set(result.serverId, result);
           const server = servers.find((s) => s.id === result.serverId);
-          if (server) reconcileUnreachableAlert(store, server, result);
+          if (!server) continue;
+
+          const reachability = reconcileUnreachableAlert(store, server, result);
+          if (reachability.opened) transitions.push({ alert: reachability.opened, server, verb: "opened" });
+          for (const a of reachability.resolved) transitions.push({ alert: a, server, verb: "resolved" });
+
+          const driftAlerts = recordDriftAlerts(store, result.driftEvents);
+          for (const a of driftAlerts) transitions.push({ alert: a, server, verb: "opened" });
+
+          const degradation = reconcileHealthDegradationAlert(store, server, degradationWindowMs);
+          if (degradation.opened) transitions.push({ alert: degradation.opened, server, verb: "opened" });
+          for (const a of degradation.resolved) transitions.push({ alert: a, server, verb: "resolved" });
         }
 
         if (!options.once) console.clear();
         console.log(chalk.bold(`mcp-reliable monitor  ${chalk.dim(new Date().toLocaleTimeString())}`));
         console.log(renderTable(servers, results));
 
-        for (const result of pass) {
-          for (const drift of result.driftEvents) {
-            console.log(chalk.yellow(`⚠ ${drift.description} (severity: ${drift.severity})`));
-          }
+        for (const { alert, server, verb } of transitions) {
+          printAlertLine(alert, server, verb);
         }
+        await Promise.all(transitions.map(({ alert, server }) => safeNotify(notifier, alert, server)));
 
         if (options.once) return;
         console.log(chalk.dim(`\nPolling every ${intervalMs}ms. Press Ctrl+C to stop.`));
