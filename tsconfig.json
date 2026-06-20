@@ -4,6 +4,7 @@
     { "path": "packages/core" },
     { "path": "packages/storage" },
     { "path": "packages/collector" },
+    { "path": "packages/notifier" },
     { "path": "packages/cli" },
     { "path": "packages/server" },
     { "path": "packages/dashboard" },
