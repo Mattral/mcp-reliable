@@ -12,7 +12,7 @@ const program = new Command();
 program
   .name("mcp-reliable")
   .description("Runtime observability and reliability platform for the Model Context Protocol ecosystem")
-  .version("0.1.0");
+  .version("0.3.0");
 
 program
   .command("init")
@@ -52,6 +52,9 @@ program
   .option("--server <id>", "Only monitor this server")
   .option("--once", "Run a single check and exit (useful for scripting/CI)")
   .option("--interval <ms>", "Polling interval in milliseconds", "30000")
+  .option("--window <ms>", "Trailing window for health-degradation scoring, in milliseconds", "3600000")
+  .option("--webhook <url>", "POST a JSON payload to this URL when an alert opens or resolves")
+  .option("--slack-webhook <url>", "Post to this Slack incoming-webhook URL when an alert opens or resolves")
   .option("--db <path>", "Path to the SQLite database")
   .action((options) => runMonitor(options));
 
@@ -69,6 +72,8 @@ program
   .description("Wrap a real MCP server, transparently recording every tool call it handles")
   .argument("<server-id>", "An id to file this server's data under (created if new)")
   .argument("<command...>", "The real server's command and args, after --")
+  .option("--webhook <url>", "POST a JSON payload to this URL when drift is detected in live traffic")
+  .option("--slack-webhook <url>", "Post to this Slack incoming-webhook URL when drift is detected in live traffic")
   .option("--db <path>", "Path to the SQLite database")
   .action((serverId: string, command: string[], options) => runProxy(serverId, command, options));
 
