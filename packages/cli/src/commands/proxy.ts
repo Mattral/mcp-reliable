@@ -1,9 +1,24 @@
+import { driftEventToAlert } from "@mcp-reliable/core";
 import { StdioProxyCollector } from "@mcp-reliable/collector";
+import { createNotifier } from "@mcp-reliable/notifier";
 import { openStore } from "../config.js";
 import { CliError } from "../errors.js";
 
 export interface ProxyOptions {
+  webhook?: string;
+  slackWebhook?: string;
   db?: string;
+}
+
+/** How long to wait for in-flight webhook/Slack deliveries during shutdown before giving up and exiting anyway — a broken receiver should never hang the process indefinitely. */
+const SHUTDOWN_NOTIFICATION_TIMEOUT_MS = 5000;
+
+function awaitPendingNotifications(pending: readonly Promise<void>[]): Promise<void> {
+  if (pending.length === 0) return Promise.resolve();
+  return Promise.race([
+    Promise.allSettled(pending).then(() => {}),
+    new Promise<void>((resolve) => setTimeout(resolve, SHUTDOWN_NOTIFICATION_TIMEOUT_MS))
+  ]);
 }
 
 /**
@@ -28,6 +43,20 @@ export async function runProxy(serverId: string, command: string[], options: Pro
 
   const { store } = openStore({ dbPath: options.db });
   const [cmd, ...args] = command as [string, ...string[]];
+  const notifier = createNotifier({ webhookUrl: options.webhook, slackWebhookUrl: options.slackWebhook });
+
+  // Notifications fire without being awaited *inside* onDrift (a callback
+  // fired mid-message-forwarding must never block proxying on webhook
+  // latency) — but they're tracked here and awaited (with a timeout) on
+  // every shutdown path below, natural or signal-driven. Fire-and-forget
+  // for the life of a single callback is fine; fire-and-forget for the
+  // life of the whole process risks losing a notification if the process
+  // exits (Ctrl+C, the wrapped server exiting, an external process
+  // manager killing this one, etc.) before an in-flight fetch finishes —
+  // exactly what an actual test run of this feature caught during
+  // development. See docs/decisions/0010-alerting-notifier-design.md.
+  const pendingNotifications: Promise<void>[] = [];
+  let shuttingDown = false;
 
   try {
     let server = store.getServer(serverId);
@@ -43,6 +72,7 @@ export async function runProxy(serverId: string, command: string[], options: Pro
       store.upsertServer(server);
       process.stderr.write(`mcp-reliable proxy: registered new server "${serverId}"\n`);
     }
+    const registeredServer = server;
 
     process.stderr.write(`mcp-reliable proxy: wrapping "${[cmd, ...args].join(" ")}" as server "${serverId}"\n`);
 
@@ -54,16 +84,47 @@ export async function runProxy(serverId: string, command: string[], options: Pro
       cwd: process.cwd(),
       onDrift: (event) => {
         process.stderr.write(`mcp-reliable proxy: drift detected — ${event.description}\n`);
+        if (!notifier) return;
+        const alert = driftEventToAlert(event);
+        store.recordAlert(alert);
+        pendingNotifications.push(
+          notifier.notify({ alert, server: registeredServer }).catch((error) => {
+            process.stderr.write(
+              `mcp-reliable proxy: notification delivery failed — ${error instanceof Error ? error.message : String(error)}\n`
+            );
+          })
+        );
       }
     });
 
+    // If this process is killed directly (Ctrl+C, an external process
+    // manager, a client that just tears down the connection) rather than
+    // the wrapped server exiting on its own, make sure the wrapped child
+    // is actually terminated (not orphaned) and any in-flight
+    // notifications get a real chance to finish before we do.
+    const handleSignal = () => {
+      if (shuttingDown) return;
+      shuttingDown = true;
+      void (async () => {
+        await collector.stop();
+        await awaitPendingNotifications(pendingNotifications);
+        store.close();
+        process.exit(0);
+      })();
+    };
+    process.on("SIGINT", handleSignal);
+    process.on("SIGTERM", handleSignal);
+
     const exitCode = await collector.start();
-    process.exitCode = exitCode ?? 0;
+    if (!shuttingDown) {
+      await awaitPendingNotifications(pendingNotifications);
+      process.exitCode = exitCode ?? 0;
+    }
   } catch (error) {
     const message = error instanceof CliError ? error.message : error instanceof Error ? error.message : String(error);
     process.stderr.write(`mcp-reliable proxy: ${message}\n`);
     process.exitCode = 1;
   } finally {
-    store.close();
+    if (!shuttingDown) store.close();
   }
 }
