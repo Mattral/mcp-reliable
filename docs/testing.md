@@ -28,14 +28,15 @@ not a manual step.
 
 ## What's covered
 
-As of this writing: **125 tests, 0 failing**, across every package.
+As of this writing: **163 tests, 0 failing**, across every package.
 
 | Package | What's tested |
 |---|---|
 | `core` | Schema/output-shape fingerprinting stability and sensitivity (key-order independence, type changes, array bucketing); percentile correctness (median, p95, order-independence, clamping); the full health-score formula (perfect/failing/slow servers, the success-rate gating behavior, drift-penalty capping, score bounds); schema and output-shape drift detection (first-observation handling, unchanged-fingerprint handling, dominance thresholds, severity bands). |
 | `storage` | Every `ReliabilityStore` method round-tripped through real SQLite (`:memory:`), including upsert idempotency, cascading deletes, time/tool-name filtering on executions, and foreign-key enforcement. |
 | `collector` | The JSON-RPC framer (chunked messages, multiple messages per chunk, malformed-line handling) in isolation; `HealthChecker` and `StdioProxyCollector` **against the real reference MCP server as an actual child process** — not mocked — covering tool listing, successful and failing (isError) tool calls, schema-drift detection across two sessions, and an unreachable-server case. |
-| `cli` | Pure logic extracted for testability: duration parsing, shell-like tokenizing, slugify, transport resolution (`add-server`'s mutually-exclusive-flags logic), the unreachable-alert open/resolve/no-duplicate state machine, and `buildServerReport`'s reachability/health-score separation. |
+| `notifier` | `WebhookNotifier` and `SlackNotifier` against an injected fake `fetch` (payload shape, header merging, non-ok-status handling, and — for the webhook — that a server's transport/secrets never appear in the delivered payload); `CompositeNotifier`'s failure isolation between multiple notifiers; the `createNotifier` factory's option-to-implementation mapping. No test hits a real network endpoint. |
+| `cli` | Pure logic extracted for testability: duration parsing, shell-like tokenizing, slugify, transport resolution (`add-server`'s mutually-exclusive-flags logic), `buildServerReport`'s reachability/health-score separation, and the full alert-reconciliation surface (`reconcileUnreachableAlert`, `reconcileHealthDegradationAlert`, `recordDriftAlerts`) — open/resolve/no-duplicate state machines for all three `Alert` kinds. |
 | `server` | Every REST endpoint via Hono's in-process `app.request()`, including the 404 cases, transport-secret redaction, the batch `health-summary` endpoint, and the dashboard static-file mounting helper (built vs. not-built, and asset serving) against a real temp directory. |
 | `dashboard` | Pure logic only: formatting/threshold helpers (mirrored against the CLI's exact score/severity bands) and the client-side per-tool aggregation logic. No component-rendering tests yet — see "what's not covered" below. |
 
@@ -77,6 +78,17 @@ for what broke and why.
   notes in `docs/decisions/0008-dashboard-stack-and-duplication.md`'s
   surrounding development), but there's no automated regression check that,
   say, `FleetOverview` still renders a row per server after a refactor.
+- The graceful-shutdown notification handling in `proxy.ts` (awaiting
+  in-flight webhook/Slack deliveries before the process exits, on both a
+  natural child-process exit and `SIGINT`/`SIGTERM`) has no automated
+  test — it was found *and* verified by hand (a real mock HTTP receiver, a
+  real spawned proxy process, killed at the exact moment that used to lose
+  the notification) rather than by the `vitest` suite. See
+  `docs/decisions/0010-alerting-notifier-design.md` for the full account.
+  An automated version of that reproduction is a reasonable addition, but
+  risks being either flaky (real timing) or not actually exercising the
+  race it's meant to catch (if too deterministic) — worth designing
+  carefully rather than bolting on quickly.
 - SSE and streamable-HTTP transports have no integration test (no
   reference server implementing them yet) — only `stdio` is exercised
   end-to-end today.
