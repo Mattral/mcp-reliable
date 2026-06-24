@@ -161,3 +161,20 @@ curl "http://localhost:4317/api/servers/reference/executions?tool=echo"
 ```
 
 See [`api-reference.md`](./api-reference.md) for the full endpoint list.
+
+## 8. Get notified
+
+Both `monitor` and `proxy` can deliver alerts (unreachable, health
+degradation, drift) to a webhook or Slack as they happen, instead of only
+showing up in the terminal/dashboard:
+
+```
+mcp-reliable monitor --server reference --once --webhook https://example.com/hooks/mcp-reliable
+mcp-reliable proxy reference --slack-webhook https://hooks.slack.com/services/… -- node examples/reference-mcp-server/dist/index.js
+```
+
+See [`cli-reference.md`](./cli-reference.md#mcp-reliable-monitor) for both
+commands' full flag list, and
+[`decisions/0010-alerting-notifier-design.md`](./decisions/0010-alerting-notifier-design.md)
+for how alerts get triggered (transitions only, not every tick) and
+delivered.

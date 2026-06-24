@@ -15,6 +15,7 @@ there are no cycles.
 @mcp-reliable/core        pure data model, health scoring, drift detection (no I/O)
 @mcp-reliable/storage     SQLite persistence, implements the ReliabilityStore interface
 @mcp-reliable/collector   HealthChecker (pull) + StdioProxyCollector (traffic-observing)
+@mcp-reliable/notifier    webhook and Slack delivery for alerts
 @mcp-reliable/cli         `mcp-reliable` command-line tool
 @mcp-reliable/server      REST API over stored data, and serves the built dashboard as static assets
 @mcp-reliable/dashboard   React + Tailwind web dashboard (fleet overview + server detail), built to static assets consumed by @mcp-reliable/server
@@ -146,6 +147,35 @@ Both live in `@mcp-reliable/core` as pure functions over arrays of
 themselves, and [`decisions/0005-health-score-formula.md`](./decisions/0005-health-score-formula.md)
 for the reasoning behind the formula (including a real bug found and fixed
 during development — see that ADR's "Revision" section).
+
+## Alerting
+
+`Alert` records (`health-degradation`, `drift`, `unreachable`) are created
+by the CLI, not by `core` or `storage` directly:
+
+- `mcp-reliable monitor` reconciles all three kinds every tick —
+  `reconcileUnreachableAlert` (reachability, open/resolve), a new
+  `reconcileHealthDegradationAlert` (a fresh trailing-window health score
+  compared against the previous one on record, via `core`'s
+  `detectHealthDegradation` — open/resolve on band transitions only, not
+  every tick a server stays degraded), and `recordDriftAlerts` (one alert
+  per schema-drift event the health check just found; no "resolved" state,
+  since drift is a point-in-time fact, not an ongoing condition).
+- `mcp-reliable proxy` also creates drift alerts, from *live* traffic
+  drift (its `onDrift` callback) — a schema change caught mid-production,
+  not just at the next scheduled check.
+
+Delivery is a separate concern, `@mcp-reliable/notifier`: a `Notifier`
+interface with `WebhookNotifier` (generic JSON) and `SlackNotifier`
+(Slack incoming-webhook format) implementations, composable via
+`CompositeNotifier`. Neither ever sends a full `Server` object over the
+wire — only `{id, name}`, for the same reason the REST API redacts
+transport secrets. See
+[`decisions/0010-alerting-notifier-design.md`](./decisions/0010-alerting-notifier-design.md)
+for the full design, including a real notification-loss race condition
+found (and fixed) during development, and why alerting only lives in the
+CLI today — the REST API reads `Alert` records but doesn't create or
+deliver them.
 
 ## REST API and dashboard
 
