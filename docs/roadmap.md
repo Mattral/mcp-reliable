@@ -27,7 +27,7 @@ Legend: ✅ done and tested · 🚧 partially done · ⬜ not started
 | Token usage tracking | ⬜ | `Execution.inputBytes`/`outputBytes` are byte-size proxies, explicitly not token counts (see `data-model.md#execution`) — real token tracking needs a tokenizer matched to the calling agent's model, which mcp-reliable has no way to know today. |
 | Error classification | ⬜ | `Execution.errorMessage` is stored verbatim; there's no grouping/clustering of common failure modes yet. |
 | Multi-server fleet view | ✅ | The dashboard's fleet overview (`/`) lists every registered server with live status; `servers`/`monitor`/`report` also already operate over every registered server. |
-| Webhook + Slack alerting | ⬜ | `Alert` records are created/resolved (`reconcileUnreachableAlert`) and queryable via the REST API and the dashboard's drift/alerts panel; no outbound webhook/Slack integration exists yet. |
+| Webhook + Slack alerting | ✅ | `@mcp-reliable/notifier` (`WebhookNotifier`, `SlackNotifier`, `CompositeNotifier`), wired into both `monitor` (`--webhook`/`--slack-webhook`) and `proxy` (live-traffic drift). All three `Alert` kinds are now actively produced — see `data-model.md#alert` and `decisions/0010-alerting-notifier-design.md`. |
 | Full MCP interface (agents can query health/drift) | ⬜ | The REST API (`api-reference.md`) has everything an MCP tool wrapper would need to call into; the MCP-facing tool surface itself isn't built. |
 | Historical trends | ✅ | `HealthScore` snapshots (`recordHealthScore`/`listHealthScores`) now have a consumer: the dashboard's health-history line chart (`GET /api/servers/:id/health-history`), populated by every `report` run or `/health` call. |
 
@@ -74,6 +74,14 @@ engine, OpenTelemetry exporter, ML-based anomaly detection, team features
   clean path-based URLs, a deliberate tradeoff to avoid needing SPA
   fallback routing in `@mcp-reliable/server` — see
   `decisions/0008-dashboard-stack-and-duplication.md`.
+- Alerting configuration (`--webhook`/`--slack-webhook`) is CLI-flag-only,
+  per-invocation — there's no persisted, per-server notification config,
+  and the REST API doesn't create or deliver alerts at all (it only reads
+  what the CLI has recorded). See `decisions/0010-alerting-notifier-design.md`.
+- Health-degradation and drift thresholds (`DEFAULT_HEALTH_DEGRADATION_THRESHOLDS`,
+  the output-shape drift dominance/sample-size defaults) are code-level
+  constants, not configurable per server yet — same gap the P2 "custom
+  rule engine" item is meant to eventually close.
 - The `cli` and `server` packages each independently resolve the DB path
   convention (small, deliberate duplication — see
   `decisions/0006-server-config-duplication.md`), which is worth revisiting
