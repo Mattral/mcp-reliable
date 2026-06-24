@@ -78,12 +78,26 @@ A detected change. `kind` is `"schema"` or `"output-shape"`; `severity` is
 
 ### Alert
 
-A notification-worthy event. Today, only the `monitor` command's
-`reconcileUnreachableAlert` produces these (opens a `critical`/`unreachable`
-alert on the first unreachable check, resolves it once the server recovers,
-never duplicates while already open). Health-degradation and drift-based
-alerts, and any outbound notification (webhook/Slack), are P1 —
-see `roadmap.md`.
+A notification-worthy event. All three `kind`s are active:
+
+- `unreachable` — `monitor`'s `reconcileUnreachableAlert`: opens a
+  `critical` alert on the first unreachable check, resolves it once the
+  server recovers, never duplicates while already open.
+- `health-degradation` — `monitor`'s `reconcileHealthDegradationAlert`,
+  backed by `core`'s `detectHealthDegradation`: opens/resolves on
+  *transitions* between health-score bands (healthy/warning/critical), not
+  on every tick a server happens to still be degraded. See
+  `decisions/0010-alerting-notifier-design.md`.
+- `drift` — `monitor`'s `recordDriftAlerts` (schema drift found during a
+  health check) and `proxy`'s `onDrift` handler (drift found in live
+  traffic). No "resolved" state — a drift alert is a point-in-time fact,
+  like the `DriftEvent` log itself, not an ongoing condition.
+
+Delivery beyond the local database and the CLI's own terminal output is
+`@mcp-reliable/notifier`'s job — see `architecture.md#alerting`. The REST
+API (`/api/servers/:id/alerts`) and the dashboard's drift/alerts panel
+both just read whatever's been recorded; alerting configuration
+(`--webhook`/`--slack-webhook`) is CLI-only today.
 
 ## Health vs. reachability
 

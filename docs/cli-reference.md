@@ -76,9 +76,15 @@ configured check interval.
 ## `mcp-reliable monitor`
 
 Polls registered servers on an interval and renders a live status table
-(reachability, latency, tool count, newly-detected drift). Also opens/
-resolves a `critical`/`unreachable` `Alert` per server as reachability
-flaps — see `data-model.md#alert`.
+(reachability, latency, tool count, newly-detected drift). Also reconciles
+and, if configured, delivers alerts every tick:
+
+- **unreachable** — opens/resolves as reachability flaps
+- **health-degradation** — opens/resolves as a fresh trailing-window
+  health score crosses between healthy/warning/critical bands (not on
+  every tick a server stays degraded — see `data-model.md#alert`)
+- **drift** — one alert per schema-drift event a health check finds
+  (no "resolved" state)
 
 ```
 --server <id>     only monitor this one server (default: all registered)
@@ -86,6 +92,10 @@ flaps — see `data-model.md#alert`.
 --interval <ms>   polling cadence (default 30000). Applies to every
                   selected server on one shared tick; see the honesty
                   note in architecture.md about per-server intervals.
+--window <ms>     trailing window for health-degradation scoring (default
+                  3600000, i.e. 1h)
+--webhook <url>          POST a JSON payload when an alert opens or resolves
+--slack-webhook <url>    post to a Slack incoming-webhook URL when an alert opens or resolves
 --db <path>
 ```
 
@@ -93,7 +103,13 @@ flaps — see `data-model.md#alert`.
 mcp-reliable monitor                       # live view of every server, every 30s, until Ctrl+C
 mcp-reliable monitor --server my-server --once
 mcp-reliable monitor --interval 5000
+mcp-reliable monitor --webhook https://example.com/hooks/mcp-reliable
+mcp-reliable monitor --slack-webhook https://hooks.slack.com/services/…
 ```
+
+Both `--webhook` and `--slack-webhook` can be set together — every alert
+goes to both, and one failing to deliver doesn't block the other (see
+`decisions/0010-alerting-notifier-design.md`).
 
 ## `mcp-reliable report`
 
@@ -126,8 +142,21 @@ using the given command as its `stdio` transport.
 the original one** — that's the entire integration step.
 
 ```
-mcp-reliable proxy my-server -- npx my-mcp-server --flag
+--webhook <url>          POST a JSON payload when drift is detected in live traffic
+--slack-webhook <url>    post to a Slack incoming-webhook URL when drift is detected in live traffic
+--db <path>
 ```
+
+```
+mcp-reliable proxy my-server -- npx my-mcp-server --flag
+mcp-reliable proxy my-server --webhook https://example.com/hooks/mcp-reliable -- npx my-mcp-server
+```
+
+Unlike `monitor`'s alerts (checked on each poll), drift alerts from `proxy`
+fire the moment a schema or output-shape change shows up in real traffic —
+useful for catching an API contract change in production as it happens,
+not at the next scheduled check. See
+[`decisions/0010-alerting-notifier-design.md`](./decisions/0010-alerting-notifier-design.md).
 
 Example agent config change (illustrative — the exact config format depends
 on your client):
