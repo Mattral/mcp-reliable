@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.3.0 — Webhook and Slack alerting
+
+Closes the last major P1 gap. See [`docs/roadmap.md`](./docs/roadmap.md)
+for full status.
+
+**Added**
+
+- `@mcp-reliable/notifier` — `WebhookNotifier` (generic JSON), `SlackNotifier`
+  (Slack incoming-webhook format), and `CompositeNotifier` (fans out to
+  both, isolating failures between them), behind a single `Notifier`
+  interface. Neither notifier ever sends a full `Server` object — only
+  `{id, name}` — for the same reason the REST API redacts transport
+  secrets.
+- `@mcp-reliable/core`: `detectHealthDegradation` (transition-based —
+  alerts on crossing into/within a worse health-score band, not on every
+  tick a server stays degraded) and `driftEventToAlert`.
+- `mcp-reliable monitor --webhook <url>` / `--slack-webhook <url>` /
+  `--window <ms>`: now reconciles and delivers all three `Alert` kinds
+  every tick (unreachable, health-degradation, drift), not just
+  unreachable. Also now persists a trailing-window health score every
+  tick, further densifying the dashboard's history chart as a side effect.
+- `mcp-reliable proxy --webhook <url>` / `--slack-webhook <url>`: delivers
+  drift alerts from **live** traffic in real time, not just at the next
+  scheduled `monitor` check.
+- ADR 0010 documenting the alerting design, including a real
+  notification-loss race condition found during manual testing (a
+  fire-and-forget webhook call could be lost if the proxy process exited
+  before the request completed) and its fix: `proxy` now tracks in-flight
+  notifications and awaits them (with a timeout) on every shutdown path,
+  natural or `SIGINT`/`SIGTERM` — which also fixed a related,
+  previously-unhandled gap where a killed proxy could orphan its wrapped
+  child process.
+- 38 new tests (125 → 163): `core`'s alert-generation logic,
+  `notifier`'s three implementations (against an injected fake `fetch`,
+  no real network calls), and the CLI's full alert-reconciliation surface.
+
 ## 0.2.1 — Fix: Node 20 CI failure (reference server spawned as unbuilt .ts)
 
 Caught by CI on the Node 20.x matrix job. See

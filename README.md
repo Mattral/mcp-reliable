@@ -30,12 +30,16 @@ planned. This README is the fast path to running it.
   history, tool breakdown, drift/alerts, execution log), served as static
   assets by the same REST API process. See
   [`docs/dashboard-design.md`](./docs/dashboard-design.md).
+- **Webhook and Slack alerting** — `monitor` and `proxy` both open/resolve
+  alerts (unreachable, health degradation, drift) and deliver them via
+  `--webhook`/`--slack-webhook`. See
+  [`docs/decisions/0010-alerting-notifier-design.md`](./docs/decisions/0010-alerting-notifier-design.md).
 - **SQLite storage**, zero config, one file per project.
 
 Not yet built: SSE/HTTP support in the traffic-observing proxy, and the
 rest of the P1/P2 items in [`docs/roadmap.md`](./docs/roadmap.md)
-(statistical drift detection, token tracking, webhook/Slack alerting, an
-agent-facing MCP interface, and more).
+(statistical drift detection, token tracking, an agent-facing MCP
+interface, and more).
 
 ## Quick start
 
@@ -46,7 +50,7 @@ git clone <this-repo>
 cd mcp-reliable
 npm install
 npm run build
-npm test   # 125+ tests, none of them mocked at the protocol level — see docs/testing.md
+npm test   # 160+ tests, none of them mocked at the protocol level — see docs/testing.md
 ```
 
 Then walk through [`docs/getting-started.md`](./docs/getting-started.md),
@@ -69,6 +73,7 @@ of the above is just `mcp-reliable ...`.
 packages/core        pure data model, health scoring, drift detection (no I/O)
 packages/storage      SQLite persistence behind a storage-agnostic interface
 packages/collector    health checks + the traffic-observing stdio proxy
+packages/notifier     webhook and Slack alert delivery
 packages/cli          the mcp-reliable command-line tool
 packages/server       REST API over stored data, serves the built dashboard
 packages/dashboard    React + Tailwind web dashboard (fleet overview + server detail)
