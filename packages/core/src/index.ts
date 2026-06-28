@@ -4,3 +4,5 @@ export * from "./stats.js";
 export * from "./health-score.js";
 export * from "./drift.js";
 export * from "./alerts.js";
+export * from "./redact.js";
+export * from "./recommendations.js";
