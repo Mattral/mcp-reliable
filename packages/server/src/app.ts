@@ -1,7 +1,6 @@
 import { Hono } from "hono";
-import { computeHealthScore, type HealthScore, type Server } from "@mcp-reliable/core";
+import { computeHealthScore, serializeServer, type HealthScore, type Server } from "@mcp-reliable/core";
 import type { ReliabilityStore } from "@mcp-reliable/storage";
-import { serializeServer } from "./serialize.js";
 
 const DEFAULT_WINDOW_MS = 24 * 3_600_000;
 const HEALTH_CHECK_TOOL_NAME = "__health_check__";
