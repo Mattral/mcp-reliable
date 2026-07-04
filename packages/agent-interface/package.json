@@ -1,0 +1,28 @@
+{
+  "name": "@mcp-reliable/agent-interface",
+  "version": "0.1.0",
+  "description": "Agent-facing MCP interface exposing mcp-reliable's own health, drift, and recommendation data as MCP tools",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@mcp-reliable/core": "^0.1.0",
+    "@mcp-reliable/storage": "^0.1.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.3"
+  }
+}
