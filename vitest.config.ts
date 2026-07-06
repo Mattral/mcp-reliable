@@ -14,7 +14,8 @@ export default defineConfig({
       "@mcp-reliable/core": path.resolve(root, "packages/core/src/index.ts"),
       "@mcp-reliable/storage": path.resolve(root, "packages/storage/src/index.ts"),
       "@mcp-reliable/collector": path.resolve(root, "packages/collector/src/index.ts"),
-      "@mcp-reliable/notifier": path.resolve(root, "packages/notifier/src/index.ts")
+      "@mcp-reliable/notifier": path.resolve(root, "packages/notifier/src/index.ts"),
+      "@mcp-reliable/agent-interface": path.resolve(root, "packages/agent-interface/src/index.ts")
     }
   },
   test: {
