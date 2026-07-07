@@ -6,13 +6,14 @@ import { runRemoveServer, runListServers } from "./commands/servers.js";
 import { runMonitor } from "./commands/monitor.js";
 import { runReport } from "./commands/report.js";
 import { runProxy } from "./commands/proxy.js";
+import { runMcp } from "./commands/mcp.js";
 
 const program = new Command();
 
 program
   .name("mcp-reliable")
   .description("Runtime observability and reliability platform for the Model Context Protocol ecosystem")
-  .version("0.3.0");
+  .version("0.4.0");
 
 program
   .command("init")
@@ -76,5 +77,11 @@ program
   .option("--slack-webhook <url>", "Post to this Slack incoming-webhook URL when drift is detected in live traffic")
   .option("--db <path>", "Path to the SQLite database")
   .action((serverId: string, command: string[], options) => runProxy(serverId, command, options));
+
+program
+  .command("mcp")
+  .description("Run the agent-facing MCP interface over stdio (list_servers, get_server_health, list_drift_events, list_alerts, get_recommendation, list_recommendations)")
+  .option("--db <path>", "Path to the SQLite database")
+  .action((options) => runMcp(options));
 
 program.parseAsync(process.argv);
