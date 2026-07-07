@@ -12,6 +12,7 @@
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@mcp-reliable/agent-interface": "^0.1.0",
     "@mcp-reliable/collector": "^0.1.0",
     "@mcp-reliable/core": "^0.1.0",
     "@mcp-reliable/notifier": "^0.1.0",

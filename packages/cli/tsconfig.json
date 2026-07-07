@@ -5,5 +5,11 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "references": [{ "path": "../core" }, { "path": "../storage" }, { "path": "../collector" }, { "path": "../notifier" }]
+  "references": [
+    { "path": "../core" },
+    { "path": "../storage" },
+    { "path": "../collector" },
+    { "path": "../notifier" },
+    { "path": "../agent-interface" }
+  ]
 }
