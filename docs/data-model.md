@@ -99,6 +99,18 @@ API (`/api/servers/:id/alerts`) and the dashboard's drift/alerts panel
 both just read whatever's been recorded; alerting configuration
 (`--webhook`/`--slack-webhook`) is CLI-only today.
 
+### Recommendation (not persisted)
+
+`{ level: "avoid" | "caution" | "healthy" | "unknown", reason: string }` —
+computed on demand by `core`'s `buildRecommendation`, never stored. Unlike
+every entity above, a recommendation isn't a fact about the past; it's a
+verdict about *right now*, synthesized fresh from a server's current
+reachability, health score, and recent drift every time it's asked for.
+Exposed via `@mcp-reliable/agent-interface`'s `get_recommendation` and
+`list_recommendations` tools — see
+`architecture.md#agent-interface` and
+`decisions/0011-agent-interface-design.md`.
+
 ## Health vs. reachability
 
 A server can be:
