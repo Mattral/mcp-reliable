@@ -16,6 +16,7 @@ there are no cycles.
 @mcp-reliable/storage     SQLite persistence, implements the ReliabilityStore interface
 @mcp-reliable/collector   HealthChecker (pull) + StdioProxyCollector (traffic-observing)
 @mcp-reliable/notifier    webhook and Slack delivery for alerts
+@mcp-reliable/agent-interface   agent-facing MCP tools (health, drift, alerts, recommendations)
 @mcp-reliable/cli         `mcp-reliable` command-line tool
 @mcp-reliable/server      REST API over stored data, and serves the built dashboard as static assets
 @mcp-reliable/dashboard   React + Tailwind web dashboard (fleet overview + server detail), built to static assets consumed by @mcp-reliable/server
@@ -185,9 +186,34 @@ events, health scores, and alerts as JSON over HTTP, plus a batch
 `GET /api/servers/health-summary` for the dashboard's fleet view. The same
 process also serves `@mcp-reliable/dashboard`'s built static assets
 (`packages/server/src/static.ts`, mounted only if the dashboard has been
-built — the API works standalone otherwise). There is still no
-agent-facing MCP interface exposing this data as MCP tools (P1 in the
-roadmap) — the REST API is what that would be built on top of.
+built — the API works standalone otherwise).
+
+## Agent interface
+
+`@mcp-reliable/agent-interface` is the "Agent" half of the spec's "Dual
+interface (Human + Agent)" principle — the dashboard/REST API serve
+humans, this serves MCP clients directly. `mcp-reliable mcp` runs it over
+stdio: six tools (`list_servers`, `get_server_health`,
+`list_drift_events`, `list_alerts`, `get_recommendation`,
+`list_recommendations`) covering the same data the REST API exposes, plus
+a synthesized `avoid`/`caution`/`healthy`/`unknown` recommendation per
+server (`core`'s `buildRecommendation`) that neither the REST API nor the
+dashboard currently surface directly. Point an agent's MCP client
+configuration at `mcp-reliable mcp` the same way `mcp-reliable proxy`
+wraps a real server's launch command — see `docs/cli-reference.md`.
+
+Transport secrets are redacted the same way as the REST API
+(`core`'s `serializeServer`, extracted from `server` into `core` once a
+third consumer needed it — see
+[`decisions/0011-agent-interface-design.md`](./decisions/0011-agent-interface-design.md)).
+Unlike the REST API's `/health` endpoint, the agent interface's health
+queries never persist a `HealthScore` snapshot — an agent might query
+before every tool call it's considering, a very different access pattern
+from a human running `report` on a schedule; see that same ADR for the
+full reasoning, plus a real "the store closed before any tool call could
+run" bug found by actually spinning up a real client against a real
+spawned process, not just the (still valuable, still passing)
+`InMemoryTransport`-based unit tests.
 
 ## Security posture (spec §11)
 

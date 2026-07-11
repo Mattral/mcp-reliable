@@ -174,6 +174,43 @@ running. All of its own diagnostic output goes to stderr — never redirect
 or merge stderr into stdout when wiring this up, or you'll corrupt the
 protocol stream.
 
+## `mcp-reliable mcp`
+
+Runs the agent-facing MCP interface over stdio — the "Agent" half of
+mcp-reliable's own dual interface (dashboard/REST API for humans, this for
+MCP clients). Point an agent's MCP client configuration at this command
+the same way `proxy` gets pointed at by a launch config wrapping a real
+server.
+
+```
+--db <path>
+```
+
+```
+mcp-reliable mcp
+```
+
+Exposes six tools, all reading from the same local database every other
+command writes to:
+
+| Tool | What it answers |
+|---|---|
+| `list_servers` | Which servers are registered, with id/name/tags/transport type |
+| `get_server_health` | Reachability + tool health score for one server |
+| `list_drift_events` | Recent schema/output-shape drift for one server |
+| `list_alerts` | Recent alerts (optionally only unresolved) for one server |
+| `get_recommendation` | Should I use this server right now? (`avoid`/`caution`/`healthy`/`unknown` + a reason) |
+| `list_recommendations` | The same verdict for every registered server in one call |
+
+See [`decisions/0011-agent-interface-design.md`](./decisions/0011-agent-interface-design.md)
+for the design (including why health queries here never persist a score
+snapshot, unlike `report`) and
+[`architecture.md#agent-interface`](./architecture.md#agent-interface) for
+how it fits alongside the REST API and dashboard.
+
+**Important:** same stdout/stderr invariant as `proxy` — this command's
+stdout is the live MCP protocol channel once running.
+
 ## Exit codes
 
 Every command sets `process.exitCode = 1` on a handled error (and leaves it

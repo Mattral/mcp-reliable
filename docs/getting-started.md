@@ -178,3 +178,22 @@ commands' full flag list, and
 [`decisions/0010-alerting-notifier-design.md`](./decisions/0010-alerting-notifier-design.md)
 for how alerts get triggered (transitions only, not every tick) and
 delivered.
+
+## 9. Ask an agent
+
+`mcp-reliable mcp` runs mcp-reliable's own MCP interface over stdio — the
+same server data, exposed as tools an agent can call directly instead of
+a human reading the CLI or dashboard:
+
+```
+mcp-reliable mcp
+```
+
+Point an MCP client at that command the same way you'd point one at
+`mcp-reliable proxy`. Once connected, try `list_servers`, then
+`get_recommendation` with the id it returns — or `list_recommendations`
+for a should-I-use-this verdict on every registered server in one call.
+See [`cli-reference.md`](./cli-reference.md#mcp-reliable-mcp) for the full
+tool list and
+[`decisions/0011-agent-interface-design.md`](./decisions/0011-agent-interface-design.md)
+for the design.
