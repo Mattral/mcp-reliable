@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.4.0 — Agent-facing MCP interface
+
+Closes the last major P1 gap — every P1 item from the original spec is
+now ✅ or 🚧 except token usage tracking and error classification (both
+noted as needing more design work, not just more time — see
+[`docs/roadmap.md`](./docs/roadmap.md)).
+
+**Added**
+
+- `@mcp-reliable/agent-interface` — `mcp-reliable mcp` runs mcp-reliable's
+  own data as an MCP server over stdio: `list_servers`,
+  `get_server_health`, `list_drift_events`, `list_alerts`,
+  `get_recommendation`, `list_recommendations`. The "Agent" half of the
+  spec's "Dual interface (Human + Agent)" principle, alongside the
+  dashboard/REST API's "Human" half.
+- `@mcp-reliable/core`: `buildRecommendation` — a priority-ordered
+  `avoid`/`caution`/`healthy`/`unknown` verdict synthesized from
+  reachability, health score, and recent high-severity drift. New logic,
+  not a repackaging of `detectHealthDegradation`.
+- `redactTransport`/`serializeServer` moved from `@mcp-reliable/server`
+  into `@mcp-reliable/core` — a third consumer (the agent interface)
+  needed the exact same secret-redaction logic, the "rule of three"
+  trigger `decisions/0006` describes for extracting shared code.
+- ADR 0011 documenting the design, including a real bug found by
+  actually spawning `mcp-reliable mcp` as a process and driving it with a
+  real MCP client: the store was closing immediately after the initial
+  handshake (before any tool call could run), because
+  `server.connect(transport)` resolves on handshake completion, not
+  session end. The `InMemoryTransport`-based unit tests never exercise
+  the CLI's store-lifecycle wiring, so they didn't catch it — this is the
+  second time in this project a bug only showed up once something was run
+  for real end to end (the first being the Node 20 issue, ADR 0009).
+- 34 new tests (163 → 193): `core`'s redaction and recommendation logic,
+  and every agent-interface tool via a real MCP `Client` connected over
+  the SDK's `InMemoryTransport` — genuine protocol round trips, no MCP
+  mocking, no process spawned.
+
 ## 0.3.0 — Webhook and Slack alerting
 
 Closes the last major P1 gap. See [`docs/roadmap.md`](./docs/roadmap.md)
