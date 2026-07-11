@@ -28,7 +28,7 @@ not a manual step.
 
 ## What's covered
 
-As of this writing: **163 tests, 0 failing**, across every package.
+As of this writing: **193 tests, 0 failing**, across every package.
 
 | Package | What's tested |
 |---|---|
@@ -36,6 +36,7 @@ As of this writing: **163 tests, 0 failing**, across every package.
 | `storage` | Every `ReliabilityStore` method round-tripped through real SQLite (`:memory:`), including upsert idempotency, cascading deletes, time/tool-name filtering on executions, and foreign-key enforcement. |
 | `collector` | The JSON-RPC framer (chunked messages, multiple messages per chunk, malformed-line handling) in isolation; `HealthChecker` and `StdioProxyCollector` **against the real reference MCP server as an actual child process** — not mocked — covering tool listing, successful and failing (isError) tool calls, schema-drift detection across two sessions, and an unreachable-server case. |
 | `notifier` | `WebhookNotifier` and `SlackNotifier` against an injected fake `fetch` (payload shape, header merging, non-ok-status handling, and — for the webhook — that a server's transport/secrets never appear in the delivered payload); `CompositeNotifier`'s failure isolation between multiple notifiers; the `createNotifier` factory's option-to-implementation mapping. No test hits a real network endpoint. |
+| `agent-interface` | Every tool, via a real MCP `Client` connected to the real `McpServer` over the SDK's `InMemoryTransport` — genuine protocol round trips (`listTools`, `callTool`), no mocking of MCP itself, but no process spawned either. Covers the full tool list, unknown-server-id error results, secret redaction in `list_servers`, and each recommendation level. `computeAgentHealthSummary` separately covers the "reflects latest check, not an aggregate" and "never persists a snapshot" behaviors against a seeded store. |
 | `cli` | Pure logic extracted for testability: duration parsing, shell-like tokenizing, slugify, transport resolution (`add-server`'s mutually-exclusive-flags logic), `buildServerReport`'s reachability/health-score separation, and the full alert-reconciliation surface (`reconcileUnreachableAlert`, `reconcileHealthDegradationAlert`, `recordDriftAlerts`) — open/resolve/no-duplicate state machines for all three `Alert` kinds. |
 | `server` | Every REST endpoint via Hono's in-process `app.request()`, including the 404 cases, transport-secret redaction, the batch `health-summary` endpoint, and the dashboard static-file mounting helper (built vs. not-built, and asset serving) against a real temp directory. |
 | `dashboard` | Pure logic only: formatting/threshold helpers (mirrored against the CLI's exact score/severity bands) and the client-side per-tool aggregation logic. No component-rendering tests yet — see "what's not covered" below. |
@@ -89,6 +90,16 @@ for what broke and why.
   risks being either flaky (real timing) or not actually exercising the
   race it's meant to catch (if too deterministic) — worth designing
   carefully rather than bolting on quickly.
+- Similarly, `agent-interface`'s store-closing-too-early bug (see
+  `docs/decisions/0011-agent-interface-design.md`) was invisible to the
+  `InMemoryTransport`-based test suite — those tests never exercise the
+  CLI's `openStore` → `runAgentServerOnStdio` → `store.close()` lifecycle,
+  only the tool-call protocol itself. It was caught by actually spawning
+  `mcp-reliable mcp` as a real process and driving it with a real `Client`
+  end to end. This is the same shape of gap as the proxy notification bug
+  above: fast, mocked-transport unit tests and "run it for real" checks
+  catch genuinely different classes of bug, and this project has now hit
+  that twice.
 - SSE and streamable-HTTP transports have no integration test (no
   reference server implementing them yet) — only `stdio` is exercised
   end-to-end today.

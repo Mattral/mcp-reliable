@@ -28,7 +28,7 @@ Legend: ✅ done and tested · 🚧 partially done · ⬜ not started
 | Error classification | ⬜ | `Execution.errorMessage` is stored verbatim; there's no grouping/clustering of common failure modes yet. |
 | Multi-server fleet view | ✅ | The dashboard's fleet overview (`/`) lists every registered server with live status; `servers`/`monitor`/`report` also already operate over every registered server. |
 | Webhook + Slack alerting | ✅ | `@mcp-reliable/notifier` (`WebhookNotifier`, `SlackNotifier`, `CompositeNotifier`), wired into both `monitor` (`--webhook`/`--slack-webhook`) and `proxy` (live-traffic drift). All three `Alert` kinds are now actively produced — see `data-model.md#alert` and `decisions/0010-alerting-notifier-design.md`. |
-| Full MCP interface (agents can query health/drift) | ⬜ | The REST API (`api-reference.md`) has everything an MCP tool wrapper would need to call into; the MCP-facing tool surface itself isn't built. |
+| Full MCP interface (agents can query health/drift) | ✅ | `@mcp-reliable/agent-interface`, run via `mcp-reliable mcp` (stdio). Six tools covering health, drift, alerts, and synthesized recommendations — see `decisions/0011-agent-interface-design.md`. No HTTP/SSE transport for it yet (stdio only, matching the traffic-observing proxy's current transport scope). |
 | Historical trends | ✅ | `HealthScore` snapshots (`recordHealthScore`/`listHealthScores`) now have a consumer: the dashboard's health-history line chart (`GET /api/servers/:id/health-history`), populated by every `report` run or `/health` call. |
 
 ## P2 — Advanced Capabilities
