@@ -1,8 +1,30 @@
 {
   "name": "@mcp-reliable/collector",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Health checking and traffic-observing proxy collectors for MCP servers",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mattral/mcp-reliable.git",
+    "directory": "packages/collector"
+  },
+  "homepage": "https://github.com/Mattral/mcp-reliable#readme",
+  "bugs": {
+    "url": "https://github.com/Mattral/mcp-reliable/issues"
+  },
+  "author": "Min Htet Myet (Mattral)",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "reliability",
+    "observability",
+    "proxy",
+    "health-check"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -11,13 +33,19 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b",
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@mcp-reliable/core": "^0.1.0",
-    "@mcp-reliable/storage": "^0.1.0",
+    "@mcp-reliable/core": "^1.0.0",
+    "@mcp-reliable/storage": "^1.0.0",
     "@modelcontextprotocol/sdk": "^1.29.0"
   },
   "devDependencies": {

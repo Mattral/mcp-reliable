@@ -1,6 +1,6 @@
 {
   "name": "@mcp-reliable/reference-mcp-server",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "A tiny stdio MCP server used to exercise mcp-reliable's collector, and as a getting-started demo target",
   "type": "module",
