@@ -1,8 +1,30 @@
 {
   "name": "@mcp-reliable/server",
-  "version": "0.1.0",
-  "description": "REST API exposing mcp-reliable's stored reliability data (foundation for the web dashboard and agent-facing MCP interface)",
+  "version": "1.0.0",
+  "description": "REST API exposing mcp-reliable's stored reliability data, and serves the web dashboard",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mattral/mcp-reliable.git",
+    "directory": "packages/server"
+  },
+  "homepage": "https://github.com/Mattral/mcp-reliable#readme",
+  "bugs": {
+    "url": "https://github.com/Mattral/mcp-reliable/issues"
+  },
+  "author": "Min Htet Myet (Mattral)",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "reliability",
+    "observability",
+    "rest-api",
+    "dashboard"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -14,14 +36,22 @@
   "bin": {
     "mcp-reliable-server": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "dashboard-dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b",
-    "clean": "rimraf dist *.tsbuildinfo"
+    "clean": "rimraf dist dashboard-dist *.tsbuildinfo",
+    "prepublishOnly": "node scripts/copy-dashboard.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^2.0.8",
-    "@mcp-reliable/core": "^0.1.0",
-    "@mcp-reliable/storage": "^0.1.0",
+    "@mcp-reliable/core": "^1.0.0",
+    "@mcp-reliable/storage": "^1.0.0",
     "hono": "^4.12.30"
   },
   "devDependencies": {

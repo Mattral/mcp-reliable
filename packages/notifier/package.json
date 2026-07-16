@@ -1,8 +1,29 @@
 {
   "name": "@mcp-reliable/notifier",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Webhook and Slack delivery for mcp-reliable alerts",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mattral/mcp-reliable.git",
+    "directory": "packages/notifier"
+  },
+  "homepage": "https://github.com/Mattral/mcp-reliable#readme",
+  "bugs": {
+    "url": "https://github.com/Mattral/mcp-reliable/issues"
+  },
+  "author": "Min Htet Myet (Mattral)",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "webhook",
+    "slack",
+    "alerting"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -11,12 +32,18 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b",
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@mcp-reliable/core": "^0.1.0"
+    "@mcp-reliable/core": "^1.0.0"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",

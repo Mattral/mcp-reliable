@@ -1,9 +1,19 @@
 {
   "name": "mcp-reliable-monorepo",
   "private": true,
-  "version": "0.4.0",
+  "version": "1.0.0",
   "description": "Runtime observability and reliability platform for the Model Context Protocol ecosystem",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mattral/mcp-reliable.git"
+  },
+  "homepage": "https://github.com/Mattral/mcp-reliable#readme",
+  "bugs": {
+    "url": "https://github.com/Mattral/mcp-reliable/issues"
+  },
+  "author": "Min Htet Myet (Mattral)",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -20,7 +30,9 @@
     "format": "prettier --write .",
     "typecheck": "tsc -b --force",
     "clean": "npm run clean --workspaces --if-present && rimraf coverage",
-    "demo": "npm run build && node packages/cli/dist/index.js"
+    "demo": "npm run build && node packages/cli/dist/index.js",
+    "release:check": "npm run lint && npm run typecheck && npm run build && npm test",
+    "release:publish": "npm publish --workspace packages/core --workspace packages/storage --workspace packages/collector --workspace packages/notifier --workspace packages/agent-interface --workspace packages/server --workspace packages/cli"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
