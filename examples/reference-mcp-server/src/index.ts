@@ -31,7 +31,7 @@ import { z } from "zod";
 
 const demoModeV2 = process.env.MCP_RELIABLE_DEMO_MODE === "v2";
 
-const server = new McpServer({ name: "reference-mcp-server", version: "0.1.0" });
+const server = new McpServer({ name: "reference-mcp-server", version: "1.0.0" });
 
 server.registerTool(
   "echo",

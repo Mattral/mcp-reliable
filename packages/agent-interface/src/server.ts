@@ -12,7 +12,7 @@ export interface CreateAgentServerOptions {
 export function createAgentServer(store: ReliabilityStore, options: CreateAgentServerOptions = {}): McpServer {
   const server = new McpServer({
     name: options.name ?? "mcp-reliable",
-    version: options.version ?? "0.1.0"
+    version: options.version ?? "1.0.0"
   });
   registerAgentTools(server, store);
   return server;
