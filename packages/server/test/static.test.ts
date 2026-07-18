@@ -1,9 +1,9 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { Hono } from "hono";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { mountDashboard } from "../src/static.js";
+import { mountDashboard, resolveDashboardDist } from "../src/static.js";
 
 describe("mountDashboard", () => {
   let tempDir: string;
@@ -42,5 +42,29 @@ describe("mountDashboard", () => {
     const res = await app.request("/app.js");
     expect(res.status).toBe(200);
     expect(await res.text()).toContain("console.log");
+  });
+});
+
+describe("resolveDashboardDist", () => {
+  let packageDir: string;
+
+  beforeEach(() => {
+    packageDir = mkdtempSync(path.join(tmpdir(), "mcp-reliable-package-dir-test-"));
+  });
+
+  afterEach(() => {
+    rmSync(packageDir, { recursive: true, force: true });
+  });
+
+  it("prefers the bundled dashboard-dist/ next to the package, when present", () => {
+    const bundled = path.join(packageDir, "dashboard-dist");
+    mkdirSync(bundled, { recursive: true });
+    expect(resolveDashboardDist(packageDir)).toBe(bundled);
+  });
+
+  it("falls back to the monorepo sibling packages/dashboard/dist when nothing is bundled", () => {
+    // packageDir simulates .../packages/server — the sibling is .../packages/dashboard/dist
+    const expectedSibling = path.resolve(packageDir, "..", "dashboard", "dist");
+    expect(resolveDashboardDist(packageDir)).toBe(expectedSibling);
   });
 });
