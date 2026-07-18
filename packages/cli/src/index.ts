@@ -13,7 +13,7 @@ const program = new Command();
 program
   .name("mcp-reliable")
   .description("Runtime observability and reliability platform for the Model Context Protocol ecosystem")
-  .version("0.4.0");
+  .version("1.0.0");
 
 program
   .command("init")

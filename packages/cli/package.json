@@ -1,22 +1,52 @@
 {
-  "name": "@mcp-reliable/cli",
-  "version": "0.1.0",
-  "description": "Command-line interface for mcp-reliable",
+  "name": "mcp-reliable",
+  "version": "1.0.0",
+  "description": "Runtime observability and reliability CLI for the Model Context Protocol ecosystem: health checks, a traffic-observing proxy, drift detection, webhook/Slack alerting, and an agent-facing MCP interface",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mattral/mcp-reliable.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/Mattral/mcp-reliable#readme",
+  "bugs": {
+    "url": "https://github.com/Mattral/mcp-reliable/issues"
+  },
+  "author": "Min Htet Myet (Mattral)",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cli",
+    "reliability",
+    "observability",
+    "monitoring",
+    "drift-detection",
+    "alerting"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "bin": {
     "mcp-reliable": "./dist/index.js"
   },
   "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b",
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@mcp-reliable/agent-interface": "^0.1.0",
-    "@mcp-reliable/collector": "^0.1.0",
-    "@mcp-reliable/core": "^0.1.0",
-    "@mcp-reliable/notifier": "^0.1.0",
-    "@mcp-reliable/storage": "^0.1.0",
+    "@mcp-reliable/agent-interface": "^1.0.0",
+    "@mcp-reliable/collector": "^1.0.0",
+    "@mcp-reliable/core": "^1.0.0",
+    "@mcp-reliable/notifier": "^1.0.0",
+    "@mcp-reliable/storage": "^1.0.0",
     "chalk": "^5.6.2",
     "cli-table3": "^0.6.5",
     "commander": "^15.0.0",
