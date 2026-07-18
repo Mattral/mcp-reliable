@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist-types/
+dashboard-dist/
 coverage/
 *.tsbuildinfo
 *.log
