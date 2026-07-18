@@ -5,12 +5,12 @@ import path from "node:path";
 import { serve } from "@hono/node-server";
 import { SqliteStore } from "@mcp-reliable/storage";
 import { createApp } from "./app.js";
-import { mountDashboard } from "./static.js";
+import { mountDashboard, resolveDashboardDist } from "./static.js";
 
 /**
  * Resolves the SQLite database path the same way the CLI does (see
  * packages/cli/src/config.ts). Duplicated rather than imported so this
- * package never depends on @mcp-reliable/cli — a small, deliberate
+ * package never depends on the `mcp-reliable` CLI package — a small, deliberate
  * duplication tracked in docs/decisions/0006-server-config-duplication.md.
  */
 function resolveDbPath(): string {
@@ -25,11 +25,8 @@ if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 const store = new SqliteStore({ path: dbPath });
 const app = createApp(store);
 
-// packages/dashboard is a sibling of this package regardless of whether
-// this file is running from src/ (Node's type-stripping, dev) or dist/
-// (built) — both are exactly one directory below packages/.
-const dashboardDist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "dashboard", "dist");
-const dashboardMounted = mountDashboard(app, dashboardDist);
+const packageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const dashboardMounted = mountDashboard(app, resolveDashboardDist(packageDir));
 
 const port = process.env.MCP_RELIABLE_PORT ? Number(process.env.MCP_RELIABLE_PORT) : 4317;
 
