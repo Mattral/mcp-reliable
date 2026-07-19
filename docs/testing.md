@@ -28,7 +28,7 @@ not a manual step.
 
 ## What's covered
 
-As of this writing: **193 tests, 0 failing**, across every package.
+As of this writing: **195 tests, 0 failing**, across every package.
 
 | Package | What's tested |
 |---|---|
@@ -38,7 +38,7 @@ As of this writing: **193 tests, 0 failing**, across every package.
 | `notifier` | `WebhookNotifier` and `SlackNotifier` against an injected fake `fetch` (payload shape, header merging, non-ok-status handling, and — for the webhook — that a server's transport/secrets never appear in the delivered payload); `CompositeNotifier`'s failure isolation between multiple notifiers; the `createNotifier` factory's option-to-implementation mapping. No test hits a real network endpoint. |
 | `agent-interface` | Every tool, via a real MCP `Client` connected to the real `McpServer` over the SDK's `InMemoryTransport` — genuine protocol round trips (`listTools`, `callTool`), no mocking of MCP itself, but no process spawned either. Covers the full tool list, unknown-server-id error results, secret redaction in `list_servers`, and each recommendation level. `computeAgentHealthSummary` separately covers the "reflects latest check, not an aggregate" and "never persists a snapshot" behaviors against a seeded store. |
 | `cli` | Pure logic extracted for testability: duration parsing, shell-like tokenizing, slugify, transport resolution (`add-server`'s mutually-exclusive-flags logic), `buildServerReport`'s reachability/health-score separation, and the full alert-reconciliation surface (`reconcileUnreachableAlert`, `reconcileHealthDegradationAlert`, `recordDriftAlerts`) — open/resolve/no-duplicate state machines for all three `Alert` kinds. |
-| `server` | Every REST endpoint via Hono's in-process `app.request()`, including the 404 cases, transport-secret redaction, the batch `health-summary` endpoint, and the dashboard static-file mounting helper (built vs. not-built, and asset serving) against a real temp directory. |
+| `server` | Every REST endpoint via Hono's in-process `app.request()`, including the 404 cases, transport-secret redaction, the batch `health-summary` endpoint, and the dashboard static-file mounting helper (built vs. not-built, and asset serving) against a real temp directory, plus `resolveDashboardDist`'s bundled-vs-monorepo-sibling fallback logic (see `decisions/0012-v1-release-preparation.md` for why that fallback exists). |
 | `dashboard` | Pure logic only: formatting/threshold helpers (mirrored against the CLI's exact score/severity bands) and the client-side per-tool aggregation logic. No component-rendering tests yet — see "what's not covered" below. |
 
 ### Why integration tests spawn a real process
