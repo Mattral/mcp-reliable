@@ -17,7 +17,7 @@ there are no cycles.
 @mcp-reliable/collector   HealthChecker (pull) + StdioProxyCollector (traffic-observing)
 @mcp-reliable/notifier    webhook and Slack delivery for alerts
 @mcp-reliable/agent-interface   agent-facing MCP tools (health, drift, alerts, recommendations)
-@mcp-reliable/cli         `mcp-reliable` command-line tool
+mcp-reliable              the CLI tool itself — published unscoped (not under the @mcp-reliable/ scope) to match its bin name and the spec's own `npx mcp-reliable init` framing
 @mcp-reliable/server      REST API over stored data, and serves the built dashboard as static assets
 @mcp-reliable/dashboard   React + Tailwind web dashboard (fleet overview + server detail), built to static assets consumed by @mcp-reliable/server
 examples/reference-mcp-server   a tiny 3-tool stdio MCP server used by tests and the getting-started guide
@@ -186,7 +186,12 @@ events, health scores, and alerts as JSON over HTTP, plus a batch
 `GET /api/servers/health-summary` for the dashboard's fleet view. The same
 process also serves `@mcp-reliable/dashboard`'s built static assets
 (`packages/server/src/static.ts`, mounted only if the dashboard has been
-built — the API works standalone otherwise).
+built — the API works standalone otherwise). `resolveDashboardDist`
+checks a bundled `dashboard-dist/` (copied into the package at publish
+time — needed for a standalone `npm install`, which doesn't preserve
+this monorepo's sibling-package layout) before falling back to the
+monorepo-local `packages/dashboard/dist` for development — see
+[`decisions/0012-v1-release-preparation.md`](./decisions/0012-v1-release-preparation.md).
 
 ## Agent interface
 

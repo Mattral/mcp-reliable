@@ -6,7 +6,7 @@ Accepted, revisit if a third consumer appears.
 
 ## Context
 
-Both `@mcp-reliable/cli` and `@mcp-reliable/server` need to answer the same
+Both the `mcp-reliable` CLI and `@mcp-reliable/server` need to answer the same
 small question: "where's the SQLite database?" (`--db`/`MCP_RELIABLE_DB`/
 `./.mcp-reliable/data.sqlite`, in that precedence order). `packages/cli/src/config.ts`
 and `packages/server/src/index.ts` each implement this independently —
