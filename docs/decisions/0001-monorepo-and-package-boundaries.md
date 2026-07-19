@@ -30,10 +30,11 @@ deployment artifact:
 - `@mcp-reliable/collector` — depends on `core` (for fingerprinting/drift)
   and `storage` (to persist what it observes), plus the MCP SDK. This is
   the only package that talks to a monitored MCP server.
-- `@mcp-reliable/cli` and `@mcp-reliable/server` — two independent
-  consumers of `core`/`storage`/`collector`. Neither depends on the other.
-  `server` doesn't depend on `cli` even though they duplicate a small
-  amount of config-resolution logic — see ADR 0006.
+- `mcp-reliable` (the CLI, published unscoped — see
+  `decisions/0012-v1-release-preparation.md`) and `@mcp-reliable/server` —
+  two independent consumers of `core`/`storage`/`collector`. Neither
+  depends on the other. `server` doesn't depend on the CLI even though
+  they duplicate a small amount of config-resolution logic — see ADR 0006.
 - `examples/reference-mcp-server` — depends on nothing from this project
   (just the MCP SDK + zod), by design: it exists to be *monitored*, not to
   monitor.
