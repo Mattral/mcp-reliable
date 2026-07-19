@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.0.0 — First stable release
+
+Every publishable package moves to `1.0.0` together (see
+[`docs/decisions/0012-v1-release-preparation.md`](./docs/decisions/0012-v1-release-preparation.md)
+for why lockstep, not independent, versioning). See
+[`RELEASE_NOTES_v1.0.0.md`](./RELEASE_NOTES_v1.0.0.md) for the full,
+narrative version of this release; this entry covers what changed
+mechanically since 0.4.0.
+
+**Changed**
+
+- The CLI package is now published unscoped as `mcp-reliable` (was
+  `@mcp-reliable/cli`) — matches its own `bin` entry and the original
+  spec's `npx mcp-reliable init` framing. Nothing else in the repo
+  depended on the old scoped name.
+- `@mcp-reliable/server` now bundles the dashboard's built output into
+  itself at publish time (`prepublishOnly` → `scripts/copy-dashboard.mjs`),
+  fixing a real gap: a standalone `npm install @mcp-reliable/server`
+  (outside this monorepo) previously could never find the dashboard at
+  all, since npm doesn't preserve monorepo sibling directories. Verified
+  by simulating a standalone install (hiding the monorepo sibling
+  directory) and confirming the bundled copy gets served instead.
+- Every publishable package gained real npm metadata (`repository`,
+  `homepage`, `bugs`, `author`, `keywords`, `engines`, `files`,
+  `publishConfig.access: "public"`) — none of this mattered before nothing
+  had been published.
+- 2 new tests (193 → 195): `resolveDashboardDist`'s bundled-vs-sibling
+  fallback logic.
+
+**Added**
+
+- `PUBLISHING.md` — the exact, verified mechanical release checklist
+  (npm scope setup, publish order, tagging, GitHub release).
+- `RELEASE_NOTES_v1.0.0.md` — this release's announcement-style writeup.
+- ADR 0012 documenting every decision above, including the
+  dashboard-bundling bug found while preparing to actually publish.
+
 ## 0.4.0 — Agent-facing MCP interface
 
 Closes the last major P1 gap — every P1 item from the original spec is

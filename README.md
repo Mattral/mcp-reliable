@@ -47,19 +47,30 @@ detection, token tracking, and the rest of P2 in
 
 ## Quick start
 
+```bash
+npm install -g mcp-reliable
+mcp-reliable init
+mcp-reliable add-server --name my-server --stdio -- npx my-mcp-server
+mcp-reliable monitor --server my-server --once
+```
+
+Then walk through [`docs/getting-started.md`](./docs/getting-started.md)
+for the full loop (health checks, the traffic-observing proxy, drift
+detection, alerting, the dashboard, and the agent-facing MCP interface),
+using the bundled `examples/reference-mcp-server` so there's nothing
+external to stand up first.
+
+### Building from source (for contributing, or trying pre-release changes)
+
 Requires Node.js 20+.
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/Mattral/mcp-reliable.git
 cd mcp-reliable
 npm install
 npm run build
-npm test   # 190+ tests, none of them mocked at the protocol level — see docs/testing.md
+npm test   # 195 tests, none of them mocked at the protocol level — see docs/testing.md
 ```
-
-Then walk through [`docs/getting-started.md`](./docs/getting-started.md),
-which uses the bundled `examples/reference-mcp-server` so there's nothing
-external to stand up first:
 
 ```bash
 node packages/cli/dist/index.js init
@@ -68,8 +79,8 @@ node packages/cli/dist/index.js add-server \
 node packages/cli/dist/index.js monitor --server reference --once
 ```
 
-Once installed globally or linked (`npm link` inside `packages/cli`), all
-of the above is just `mcp-reliable ...`.
+`npm link` inside `packages/cli` to get a local `mcp-reliable` command
+without a real install.
 
 ## Project layout
 
@@ -95,6 +106,13 @@ caught the bug if you'd gotten it wrong — see
 [`docs/decisions/0005-health-score-formula.md`](./docs/decisions/0005-health-score-formula.md)
 for a real example of exactly that happening during this project's own
 development.
+
+## Releasing
+
+See [`PUBLISHING.md`](./PUBLISHING.md) for the mechanical checklist
+(npm publish order, tagging, GitHub release) and
+[`RELEASE_NOTES_v1.0.0.md`](./RELEASE_NOTES_v1.0.0.md) for what shipped in
+the current release.
 
 ## License
 
