@@ -5,6 +5,12 @@ original project spec (`mcp-reliable-project-spec.md`, §8). This file is
 meant to be kept current — update it alongside any feature work, per the
 spec's own instruction to document every major update.
 
+**v1.0.0 shipped** with everything marked ✅ below through the agent
+interface (see [`RELEASE_NOTES_v1.0.0.md`](../RELEASE_NOTES_v1.0.0.md)).
+Everything still ⬜/🚧 is post-1.0 roadmap, not a blocker that was missed —
+P2 in particular was framed by the original spec itself as "Advanced
+Capabilities," later-stage work, not part of the release-readiness bar.
+
 Legend: ✅ done and tested · 🚧 partially done · ⬜ not started
 
 ## P0 — Foundation (MVP)
