@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { HealthCheckResult } from "@mcp-reliable/collector";
-import type { DriftEvent, Server } from "@mcp-reliable/core";
-import { SqliteStore } from "@mcp-reliable/storage";
+import type { HealthCheckResult } from "@mattral/collector";
+import type { DriftEvent, Server } from "@mattral/core";
+import { SqliteStore } from "@mattral/storage";
 import {
   reconcileHealthDegradationAlert,
   reconcileUnreachableAlert,

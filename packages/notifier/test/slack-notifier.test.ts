@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Alert, Server } from "@mcp-reliable/core";
+import type { Alert, Server } from "@mattral/core";
 import { SlackNotifier } from "../src/slack-notifier.js";
 
 function server(): Server {

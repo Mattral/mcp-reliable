@@ -1,7 +1,7 @@
 import { PassThrough } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { SqliteStore } from "@mcp-reliable/storage";
+import { SqliteStore } from "@mattral/storage";
 import { StdioProxyCollector } from "../src/proxy-collector.js";
 import { StreamPairTransport } from "./helpers/stream-pair-transport.js";
 import { ensureReferenceServerBuilt } from "./helpers/ensure-reference-server-built.js";

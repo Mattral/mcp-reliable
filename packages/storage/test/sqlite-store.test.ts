@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { Alert, DriftEvent, Execution, HealthScore, Server, Tool } from "@mcp-reliable/core";
+import type { Alert, DriftEvent, Execution, HealthScore, Server, Tool } from "@mattral/core";
 import { SqliteStore } from "../src/sqlite-store.js";
 
 function makeServer(overrides: Partial<Server> = {}): Server {

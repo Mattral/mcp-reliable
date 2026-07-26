@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import type { Server } from "@mcp-reliable/core";
-import { SqliteStore } from "@mcp-reliable/storage";
+import type { Server } from "@mattral/core";
+import { SqliteStore } from "@mattral/storage";
 import { createAgentServer } from "../src/server.js";
 
 function makeServer(overrides: Partial<Server> = {}): Server {

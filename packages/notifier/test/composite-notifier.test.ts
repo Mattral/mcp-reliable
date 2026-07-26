@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Alert, Server } from "@mcp-reliable/core";
+import type { Alert, Server } from "@mattral/core";
 import { CompositeNotifier } from "../src/composite-notifier.js";
 import type { Notifier } from "../src/notifier.js";
 
