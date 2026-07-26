@@ -1,4 +1,4 @@
-import type { AlertSeverity } from "@mcp-reliable/core";
+import type { AlertSeverity } from "@mattral/core";
 import type { Notifier, NotificationPayload } from "./notifier.js";
 
 export interface SlackNotifierOptions {

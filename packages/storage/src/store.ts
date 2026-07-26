@@ -1,4 +1,4 @@
-import type { Alert, DriftEvent, Execution, HealthScore, Server, Tool } from "@mcp-reliable/core";
+import type { Alert, DriftEvent, Execution, HealthScore, Server, Tool } from "@mattral/core";
 
 export interface ListExecutionsQuery {
   serverId: string;

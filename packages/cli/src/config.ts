@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
-import { SqliteStore } from "@mcp-reliable/storage";
+import { SqliteStore } from "@mattral/storage";
 
 export const DEFAULT_DATA_DIR = ".mcp-reliable";
 export const DEFAULT_DB_FILENAME = "data.sqlite";

@@ -1,8 +1,8 @@
 import ora from "ora";
 import chalk from "chalk";
-import { computeHealthScore, type Server } from "@mcp-reliable/core";
-import { HEALTH_CHECK_TOOL_NAME } from "@mcp-reliable/collector";
-import type { ReliabilityStore } from "@mcp-reliable/storage";
+import { computeHealthScore, type Server } from "@mattral/core";
+import { HEALTH_CHECK_TOOL_NAME } from "@mattral/collector";
+import type { ReliabilityStore } from "@mattral/storage";
 import { openStore } from "../config.js";
 import { CliError, withFriendlyErrors } from "../errors.js";
 import { formatMs, formatPercent, formatScore, formatSeverity, parseDuration } from "../format.js";

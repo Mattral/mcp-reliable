@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import chalk from "chalk";
 import Table from "cli-table3";
-import type { Alert, DriftEvent, HealthDegradationThresholds, Server } from "@mcp-reliable/core";
-import { DEFAULT_HEALTH_DEGRADATION_THRESHOLDS, detectHealthDegradation, driftEventToAlert } from "@mcp-reliable/core";
-import { HealthChecker, type HealthCheckResult } from "@mcp-reliable/collector";
-import type { ReliabilityStore } from "@mcp-reliable/storage";
-import { createNotifier, type Notifier } from "@mcp-reliable/notifier";
+import type { Alert, DriftEvent, HealthDegradationThresholds, Server } from "@mattral/core";
+import { DEFAULT_HEALTH_DEGRADATION_THRESHOLDS, detectHealthDegradation, driftEventToAlert } from "@mattral/core";
+import { HealthChecker, type HealthCheckResult } from "@mattral/collector";
+import type { ReliabilityStore } from "@mattral/storage";
+import { createNotifier, type Notifier } from "@mattral/notifier";
 import { openStore } from "../config.js";
 import { CliError, withFriendlyErrors } from "../errors.js";
 import { formatMs } from "../format.js";
@@ -95,7 +95,7 @@ export interface HealthDegradationReconciliation extends AlertReconciliation {
  * history chart as a side effect of monitoring, not just of `report`
  * runs), compares it against the previously recorded score, and opens or
  * resolves a `health-degradation` alert accordingly. Pairs with
- * `detectHealthDegradation` in `@mcp-reliable/core` the same way this
+ * `detectHealthDegradation` in `@mattral/core` the same way this
  * file's `reconcileUnreachableAlert` pairs with a raw reachability check —
  * see that function's docstring for why transition-only, band-based
  * alerting avoids re-alerting on every tick a server stays degraded.

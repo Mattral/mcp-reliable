@@ -7,7 +7,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
  * Two possible locations for the built dashboard, checked in order:
  *
  * 1. `dashboard-dist/` bundled into this package itself — what a
- *    standalone `npm install @mcp-reliable/server` (outside this
+ *    standalone `npm install @mattral/server` (outside this
  *    monorepo) actually has, copied in at publish time by
  *    `scripts/copy-dashboard.mjs` (see that file's comment, and
  *    `docs/decisions/0012-v1-release-preparation.md`). Without this, a

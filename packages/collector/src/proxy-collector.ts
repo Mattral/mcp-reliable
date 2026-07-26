@@ -7,8 +7,8 @@ import {
   type DriftEvent,
   type Execution,
   type Tool
-} from "@mcp-reliable/core";
-import type { ReliabilityStore } from "@mcp-reliable/storage";
+} from "@mattral/core";
+import type { ReliabilityStore } from "@mattral/storage";
 import { JsonRpcFramer, type JsonRpcMessage } from "./json-rpc-framer.js";
 
 export interface StdioProxyCollectorOptions {

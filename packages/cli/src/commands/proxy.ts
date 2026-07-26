@@ -1,6 +1,6 @@
-import { driftEventToAlert } from "@mcp-reliable/core";
-import { StdioProxyCollector } from "@mcp-reliable/collector";
-import { createNotifier } from "@mcp-reliable/notifier";
+import { driftEventToAlert } from "@mattral/core";
+import { StdioProxyCollector } from "@mattral/collector";
+import { createNotifier } from "@mattral/notifier";
 import { openStore } from "../config.js";
 import { CliError } from "../errors.js";
 

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { serve } from "@hono/node-server";
-import { SqliteStore } from "@mcp-reliable/storage";
+import { SqliteStore } from "@mattral/storage";
 import { createApp } from "./app.js";
 import { mountDashboard, resolveDashboardDist } from "./static.js";
 

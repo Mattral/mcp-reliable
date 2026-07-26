@@ -1,4 +1,4 @@
-import type { Alert, Server } from "@mcp-reliable/core";
+import type { Alert, Server } from "@mattral/core";
 
 export interface NotificationPayload {
   alert: Alert;

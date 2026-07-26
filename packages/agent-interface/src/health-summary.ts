@@ -1,5 +1,5 @@
-import { computeHealthScore, type HealthScore, type Server } from "@mcp-reliable/core";
-import type { ReliabilityStore } from "@mcp-reliable/storage";
+import { computeHealthScore, type HealthScore, type Server } from "@mattral/core";
+import type { ReliabilityStore } from "@mattral/storage";
 
 const HEALTH_CHECK_TOOL_NAME = "__health_check__";
 
@@ -13,7 +13,7 @@ export interface AgentHealthSummary {
 
 /**
  * Computes reachability + a trailing-window tool health score for a
- * server, the same shape of computation `@mcp-reliable/server`'s
+ * server, the same shape of computation `@mattral/server`'s
  * `/api/servers/:id/health` endpoint and the CLI's `report` command both
  * do — but deliberately **read-only**: it never calls
  * `store.recordHealthScore`.

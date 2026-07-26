@@ -1,4 +1,4 @@
-import { runAgentServerOnStdio } from "@mcp-reliable/agent-interface";
+import { runAgentServerOnStdio } from "@mattral/agent-interface";
 import { openStore } from "../config.js";
 
 export interface McpOptions {

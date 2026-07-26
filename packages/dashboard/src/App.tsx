@@ -14,7 +14,7 @@ const ServerDetail = lazy(() => import("./pages/ServerDetail.js").then((m) => ({
  * index.html for "/" plus its built assets — every sub-route is resolved
  * entirely client-side from the URL fragment, which the server never even
  * sees in the request. This avoids needing a catch-all SPA-fallback route
- * in @mcp-reliable/server (see docs/decisions/0008-dashboard-stack-and-duplication.md).
+ * in @mattral/server (see docs/decisions/0008-dashboard-stack-and-duplication.md).
  */
 export function App() {
   return (

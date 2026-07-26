@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { buildRecommendation } from "@mcp-reliable/core";
-import type { ReliabilityStore } from "@mcp-reliable/storage";
+import { buildRecommendation } from "@mattral/core";
+import type { ReliabilityStore } from "@mattral/storage";
 import { computeAgentHealthSummary } from "./health-summary.js";
 
 const DEFAULT_WINDOW_MS = 3_600_000; // 1h, matching `monitor --window`'s default

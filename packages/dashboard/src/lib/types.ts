@@ -1,7 +1,7 @@
 /**
- * These types mirror `@mcp-reliable/core`'s data model closely enough to
+ * These types mirror `@mattral/core`'s data model closely enough to
  * type the REST API's JSON responses, but are declared independently
- * rather than imported from `@mcp-reliable/core` directly: that package's
+ * rather than imported from `@mattral/core` directly: that package's
  * `index.ts` re-exports `fingerprint.ts`, which imports `node:crypto` — a
  * Node builtin that doesn't exist in a browser bundle. Duplicating just the
  * type shapes (zero runtime cost) is simpler than splitting `core` into

@@ -1,4 +1,4 @@
-import type { TransportConfig } from "@mcp-reliable/core";
+import type { TransportConfig } from "@mattral/core";
 import { openStore } from "../config.js";
 import { CliError, withFriendlyErrors } from "../errors.js";
 import { slugify, tokenizeShellLike } from "../text-utils.js";
