@@ -10,7 +10,7 @@ npm run lint            # eslint .
 ```
 
 `npm test` does **not** require `npm run build` first: `vitest.config.ts`
-aliases each workspace package name (`@mcp-reliable/core`, `/storage`,
+aliases each workspace package name (`@mattral/core`, `/storage`,
 `/collector`) directly to its `src/index.ts`, so cross-package imports in
 tests resolve against TypeScript source via esbuild, not compiled `dist/`
 output. This keeps the inner test loop fast and independent of build order.

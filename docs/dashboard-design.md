@@ -12,7 +12,7 @@ type/logic duplication) in ADR form.
 ## What shipped
 
 - `packages/dashboard`: a Vite + React 19 + Tailwind v4 single-page app,
-  built to static assets and served by `@mcp-reliable/server` at `/` —
+  built to static assets and served by `@mattral/server` at `/` —
   exactly the "no new process" goal below. Run `npm run build` (root, or
   specifically in `packages/dashboard`) then
   `node packages/server/dist/index.js`; the server logs whether it found a
@@ -45,7 +45,7 @@ type/logic duplication) in ADR form.
   shipped instead — see the ADR (same category of reasoning as the CLI's
   Ink deviation, ADR 0004, plus the shadcn CLI needing registry network
   access this environment didn't have).
-- **Data model reuse**: the plan didn't anticipate that `@mcp-reliable/core`
+- **Data model reuse**: the plan didn't anticipate that `@mattral/core`
   isn't browser-safe as a whole (`fingerprint.ts` imports `node:crypto`).
   The dashboard declares its own mirrored types and re-implements the score/
   severity color thresholds rather than importing `core` directly — see the
@@ -84,7 +84,7 @@ type/logic duplication) in ADR form.
 
 - Multi-user auth / RBAC (P2 in the original spec).
 - Editing alert rules or drift thresholds from the UI (still code-level
-  defaults in `@mcp-reliable/core` — see
+  defaults in `@mattral/core` — see
   `decisions/0005-health-score-formula.md`).
 - Real-time push updates (15s polling, not a WebSocket/SSE live feed — a
   reasonable later addition if someone actually asks for it).

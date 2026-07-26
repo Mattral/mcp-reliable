@@ -12,7 +12,7 @@ npm run lint
 ## Before opening a PR
 
 - `npm run lint && npm run build && npm test` should all be clean.
-- New logic in `@mcp-reliable/core` (health scoring, drift detection,
+- New logic in `@mattral/core` (health scoring, drift detection,
   fingerprinting) should ship with unit tests covering the interesting
   boundary cases (zero samples, 100%/0% success, threshold edges) — this
   project's own [health-score formula](./docs/decisions/0005-health-score-formula.md)

@@ -8,11 +8,11 @@ Accepted.
 
 `dashboard-design.md` proposed React + Tailwind + shadcn/ui (per the
 original spec's stack table), served as static assets by
-`@mcp-reliable/server` with no new process. Three concrete implementation
+`@mattral/server` with no new process. Three concrete implementation
 questions came up that the design doc didn't resolve: which component
 system to actually use, how client-side routing should work given the
 server has no templating/fallback layer, and how (or whether) the
-dashboard should reuse `@mcp-reliable/core`'s types and thresholds.
+dashboard should reuse `@mattral/core`'s types and thresholds.
 
 ## Decisions
 
@@ -34,7 +34,7 @@ component system — the same reasoning as
 `react-router-dom`'s `createBrowserRouter` needs the server to answer
 `GET /servers/xyz` with the SPA's `index.html` (a "SPA fallback" route),
 since path-based routing relies on the browser's real navigation. Adding
-that fallback to `@mcp-reliable/server` would mean carefully ordering it
+that fallback to `@mattral/server` would mean carefully ordering it
 *after* every `/api/*` route and *after* real static asset lookups, without
 accidentally swallowing a genuine 404 for a missing asset.
 
@@ -53,9 +53,9 @@ contained, well-scoped change.
 
 ### 3. Duplicated types and thresholds, not a shared browser-safe package
 
-`@mcp-reliable/core`'s `index.ts` re-exports `fingerprint.ts`, which
+`@mattral/core`'s `index.ts` re-exports `fingerprint.ts`, which
 imports `node:crypto` — a Node builtin unavailable in a browser bundle.
-Importing `@mcp-reliable/core` into the dashboard as-is would either fail
+Importing `@mattral/core` into the dashboard as-is would either fail
 to bundle or require a bundler-side Node-builtin shim, neither of which is
 worth it for what the dashboard actually needs: a handful of type shapes
 (`Server`, `Execution`, `HealthScore`, etc.) and the score/severity color
@@ -76,7 +76,7 @@ duplication over premature abstraction) to a second case.
 
 - If `core` ever needs a genuine browser-safe subset (e.g. the dashboard
   starts needing `computeHealthScore` client-side, not just its
-  thresholds), that's the trigger to add a `@mcp-reliable/core/browser`
+  thresholds), that's the trigger to add a `@mattral/core/browser`
   (or similar) subpath export containing only the Node-independent modules
   (`health-score.ts`, `stats.ts`, `drift.ts` — none of which touch
   `node:crypto`), rather than duplicating more logic by hand.

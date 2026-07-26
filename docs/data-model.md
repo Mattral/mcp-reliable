@@ -2,7 +2,7 @@
 
 All types below are defined with `zod` schemas in `packages/core/src/types.ts`
 (so they're both a compile-time type and a runtime-validatable schema) and
-persisted by `@mcp-reliable/storage` in the SQLite tables shown.
+persisted by `@mattral/storage` in the SQLite tables shown.
 
 ## Entities
 
@@ -94,7 +94,7 @@ A notification-worthy event. All three `kind`s are active:
   like the `DriftEvent` log itself, not an ongoing condition.
 
 Delivery beyond the local database and the CLI's own terminal output is
-`@mcp-reliable/notifier`'s job — see `architecture.md#alerting`. The REST
+`@mattral/notifier`'s job — see `architecture.md#alerting`. The REST
 API (`/api/servers/:id/alerts`) and the dashboard's drift/alerts panel
 both just read whatever's been recorded; alerting configuration
 (`--webhook`/`--slack-webhook`) is CLI-only today.
@@ -106,7 +106,7 @@ computed on demand by `core`'s `buildRecommendation`, never stored. Unlike
 every entity above, a recommendation isn't a fact about the past; it's a
 verdict about *right now*, synthesized fresh from a server's current
 reachability, health score, and recent drift every time it's asked for.
-Exposed via `@mcp-reliable/agent-interface`'s `get_recommendation` and
+Exposed via `@mattral/agent-interface`'s `get_recommendation` and
 `list_recommendations` tools — see
 `architecture.md#agent-interface` and
 `decisions/0011-agent-interface-design.md`.

@@ -24,9 +24,9 @@ to this point. This project doesn't yet have a release cadence where
 packages diverge in maturity enough to justify independent versioning
 (the "fixed/lockstep" mode several large monorepos use) — every package
 was built in the same handful of passes, and a consumer installing
-`mcp-reliable` today has no reason to think of `@mcp-reliable/core`'s
+`mcp-reliable` today has no reason to think of `@mattral/core`'s
 history as separate from the CLI's. Internal workspace dependency ranges
-(`"@mcp-reliable/core": "^1.0.0"`, etc.) move to match.
+(`"@mattral/core": "^1.0.0"`, etc.) move to match.
 
 If a package's release cadence genuinely diverges later (e.g. `core`
 needs a breaking change independent of everything else), that's the
@@ -34,27 +34,27 @@ trigger to move it to independent versioning — not before.
 
 ### The CLI is published unscoped, as `mcp-reliable`
 
-Every other package publishes as `@mcp-reliable/<name>`. The CLI does
+Every other package publishes as `@mattral/<name>`. The CLI does
 not — it publishes as plain `mcp-reliable`, matching its own `bin` entry
 and the original spec's own DX examples throughout (`npx mcp-reliable
 init`, `mcp-reliable add-server ...`). A scoped package name doesn't
-match what `npm install -g @mcp-reliable/cli` would actually feel like to
+match what `npm install -g @mattral/cli` would actually feel like to
 type versus `npm install -g mcp-reliable` — for the one package end users
 actually install directly (everything else is a library dependency of
 it), the friendly name wins. This is a rename of the *published* package
 name only; the workspace directory stays `packages/cli` and nothing else
 needed to change to accommodate it (confirmed: nothing else in this repo
-imports `@mcp-reliable/cli` as a dependency — it was already a leaf in
+imports `@mattral/cli` as a dependency — it was already a leaf in
 the dependency graph, per [ADR 0001](./0001-monorepo-and-package-boundaries.md)).
 
-### `@mcp-reliable/server` bundles the dashboard's build output before publishing
+### `@mattral/server` bundles the dashboard's build output before publishing
 
 This was the one real bug caught while preparing the release, not
 something anticipated in advance: `mountDashboard`'s dashboard-finding
 logic (see [ADR 0008](./0008-dashboard-stack-and-duplication.md)) looked
 for the built dashboard at a sibling `packages/dashboard/dist` directory —
 correct inside this monorepo, but **nonexistent** for anyone who runs
-`npm install @mcp-reliable/server` on its own. npm does not preserve
+`npm install @mattral/server` on its own. npm does not preserve
 monorepo sibling layout on install; a standalone install would have
 `mountDashboard` degrade gracefully (its own designed behavior — log that
 the dashboard wasn't found, keep serving the REST API), but "gracefully
@@ -103,9 +103,9 @@ here; every push happened on the user's machine).
 ## Consequences
 
 - `dashboard-dist/` is gitignored (generated at publish time, not a
-  source file) but included in `@mcp-reliable/server`'s published `files`
+  source file) but included in `@mattral/server`'s published `files`
   list.
-- Anyone building `@mcp-reliable/server` from source inside this monorepo
+- Anyone building `@mattral/server` from source inside this monorepo
   (not via `npm publish`) still gets the dev-mode sibling-directory
   fallback — nothing changed about local development.
 - Future packages that bundle another package's build output before
