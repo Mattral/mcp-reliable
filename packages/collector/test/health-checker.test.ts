@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { Server } from "@mcp-reliable/core";
-import { SqliteStore } from "@mcp-reliable/storage";
+import type { Server } from "@mattral/core";
+import { SqliteStore } from "@mattral/storage";
 import { HealthChecker, HEALTH_CHECK_TOOL_NAME } from "../src/health-checker.js";
 import { ensureReferenceServerBuilt } from "./helpers/ensure-reference-server-built.js";
 
