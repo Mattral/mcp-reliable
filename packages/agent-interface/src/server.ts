@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { ReliabilityStore } from "@mcp-reliable/storage";
+import type { ReliabilityStore } from "@mattral/storage";
 import { registerAgentTools } from "./tools.js";
 
 export interface CreateAgentServerOptions {

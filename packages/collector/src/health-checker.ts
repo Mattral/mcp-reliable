@@ -7,8 +7,8 @@ import {
   type Execution,
   type Server,
   type Tool
-} from "@mcp-reliable/core";
-import type { ReliabilityStore } from "@mcp-reliable/storage";
+} from "@mattral/core";
+import type { ReliabilityStore } from "@mattral/storage";
 import { createClientTransport } from "./transport-factory.js";
 
 export interface HealthCheckResult {

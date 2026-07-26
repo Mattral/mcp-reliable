@@ -11,11 +11,11 @@ export default defineConfig({
     // script (tsc -b, producing dist/) is still what the CLI/server run
     // against at runtime and what CI type-checks — see docs/testing.md.
     alias: {
-      "@mcp-reliable/core": path.resolve(root, "packages/core/src/index.ts"),
-      "@mcp-reliable/storage": path.resolve(root, "packages/storage/src/index.ts"),
-      "@mcp-reliable/collector": path.resolve(root, "packages/collector/src/index.ts"),
-      "@mcp-reliable/notifier": path.resolve(root, "packages/notifier/src/index.ts"),
-      "@mcp-reliable/agent-interface": path.resolve(root, "packages/agent-interface/src/index.ts")
+      "@mattral/core": path.resolve(root, "packages/core/src/index.ts"),
+      "@mattral/storage": path.resolve(root, "packages/storage/src/index.ts"),
+      "@mattral/collector": path.resolve(root, "packages/collector/src/index.ts"),
+      "@mattral/notifier": path.resolve(root, "packages/notifier/src/index.ts"),
+      "@mattral/agent-interface": path.resolve(root, "packages/agent-interface/src/index.ts")
     }
   },
   test: {

@@ -1,5 +1,5 @@
 /**
- * Schema version this build of @mcp-reliable/storage expects. Stored in
+ * Schema version this build of @mattral/storage expects. Stored in
  * SQLite's built-in `PRAGMA user_version`. When this number is bumped,
  * `runMigrations` below should grow a `if (version < N)` branch that
  * migrates forward — there is deliberately no separate migrations table

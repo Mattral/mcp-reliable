@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import type { Alert, DriftEvent, Execution, HealthScore, Server, Tool } from "@mcp-reliable/core";
+import type { Alert, DriftEvent, Execution, HealthScore, Server, Tool } from "@mattral/core";
 import { SCHEMA_SQL, SCHEMA_VERSION } from "./schema.js";
 import type {
   ListAlertsQuery,
