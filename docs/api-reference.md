@@ -1,10 +1,10 @@
 # REST API Reference
 
-Served by `@mcp-reliable/server` (`packages/server`). Start it with:
+Served by `@mattral/server` (`packages/server`). Start it with:
 
 ```
 node packages/server/dist/index.js
-# or, once published: npx @mcp-reliable/server
+# or, once published: npx @mattral/server
 ```
 
 Configuration mirrors the CLI: `MCP_RELIABLE_DB` for the database path

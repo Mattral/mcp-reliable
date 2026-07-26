@@ -14,15 +14,15 @@ which tools to use." The P1 feature list calls this out concretely: "Full
 MCP interface: Agents can query health, drift, and recommendations."
 
 Everything needed to answer those queries already existed in
-`@mcp-reliable/core` and `@mcp-reliable/storage` — what was missing was an
-MCP-shaped surface exposing it, the way `@mcp-reliable/server`'s REST API
+`@mattral/core` and `@mattral/storage` — what was missing was an
+MCP-shaped surface exposing it, the way `@mattral/server`'s REST API
 exposes it to HTTP clients and the dashboard.
 
 ## Decisions
 
 ### A new package, not folded into `server` or `cli`
 
-`@mcp-reliable/agent-interface` builds an `McpServer` (given a
+`@mattral/agent-interface` builds an `McpServer` (given a
 `ReliabilityStore`) with tools registered on it, plus a
 `runAgentServerOnStdio` helper. It depends only on `core` and `storage`,
 matching the dependency shape of `collector` and `notifier` — every
@@ -38,7 +38,7 @@ Like `StdioProxyCollector` before it (see
 stdio transport in this pass — the transport most MCP clients (Claude
 Desktop, Claude Code, and most agent frameworks as of this writing)
 support natively without extra configuration. An HTTP-based `/mcp`
-endpoint mounted on `@mcp-reliable/server` (reusing the same
+endpoint mounted on `@mattral/server` (reusing the same
 `ReliabilityStore` connection the REST API already holds) is a natural
 follow-up for clients that prefer that transport, not built yet.
 
@@ -74,7 +74,7 @@ priority order and rationale.
 ### The agent interface computes its own (non-persisting) health summary
 
 `packages/agent-interface/src/health-summary.ts`'s `computeAgentHealthSummary`
-duplicates the *shape* of computation `@mcp-reliable/server`'s
+duplicates the *shape* of computation `@mattral/server`'s
 `/api/servers/:id/health` endpoint does, but deliberately never calls
 `store.recordHealthScore`. This is not the same kind of "accept
 duplication over premature abstraction" call as

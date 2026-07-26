@@ -6,7 +6,7 @@ Accepted, revisit if a third consumer appears.
 
 ## Context
 
-Both the `mcp-reliable` CLI and `@mcp-reliable/server` need to answer the same
+Both the `mcp-reliable` CLI and `@mattral/server` need to answer the same
 small question: "where's the SQLite database?" (`--db`/`MCP_RELIABLE_DB`/
 `./.mcp-reliable/data.sqlite`, in that precedence order). `packages/cli/src/config.ts`
 and `packages/server/src/index.ts` each implement this independently —
@@ -15,7 +15,7 @@ about 15 lines, duplicated rather than shared.
 ## Decision
 
 Accept the duplication for now rather than introducing a new shared
-package (e.g. `@mcp-reliable/config`) or having `server` depend on `cli`.
+package (e.g. `@mattral/config`) or having `server` depend on `cli`.
 
 Reasoning: `server` depending on `cli` would be backwards (a REST API
 service depending on a command-line tool is an odd dependency direction,
@@ -29,7 +29,7 @@ build step, and a version to keep in sync, for less code than this ADR.
 
 - If a third package needs the same convention (a future dashboard-serving
   process, a background scheduler, etc.), that's the trigger to extract a
-  shared `@mcp-reliable/config` package — "rule of three," not "rule of
+  shared `@mattral/config` package — "rule of three," not "rule of
   two."
 - Until then, a change to the DB-path resolution convention (e.g. adding a
   config-file-based override) must be applied in both

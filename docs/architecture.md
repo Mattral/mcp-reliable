@@ -12,14 +12,14 @@ responsibility and depends only on the packages below it in this list —
 there are no cycles.
 
 ```
-@mcp-reliable/core        pure data model, health scoring, drift detection (no I/O)
-@mcp-reliable/storage     SQLite persistence, implements the ReliabilityStore interface
-@mcp-reliable/collector   HealthChecker (pull) + StdioProxyCollector (traffic-observing)
-@mcp-reliable/notifier    webhook and Slack delivery for alerts
-@mcp-reliable/agent-interface   agent-facing MCP tools (health, drift, alerts, recommendations)
-mcp-reliable              the CLI tool itself — published unscoped (not under the @mcp-reliable/ scope) to match its bin name and the spec's own `npx mcp-reliable init` framing
-@mcp-reliable/server      REST API over stored data, and serves the built dashboard as static assets
-@mcp-reliable/dashboard   React + Tailwind web dashboard (fleet overview + server detail), built to static assets consumed by @mcp-reliable/server
+@mattral/core        pure data model, health scoring, drift detection (no I/O)
+@mattral/storage     SQLite persistence, implements the ReliabilityStore interface
+@mattral/collector   HealthChecker (pull) + StdioProxyCollector (traffic-observing)
+@mattral/notifier    webhook and Slack delivery for alerts
+@mattral/agent-interface   agent-facing MCP tools (health, drift, alerts, recommendations)
+mcp-reliable              the CLI tool itself — published unscoped (not under the @mattral/ scope) to match its bin name and the spec's own `npx mcp-reliable init` framing
+@mattral/server      REST API over stored data, and serves the built dashboard as static assets
+@mattral/dashboard   React + Tailwind web dashboard (fleet overview + server detail), built to static assets consumed by @mattral/server
 examples/reference-mcp-server   a tiny 3-tool stdio MCP server used by tests and the getting-started guide
 ```
 
@@ -141,7 +141,7 @@ later without touching any other package.
 
 ## Health scoring and drift detection
 
-Both live in `@mcp-reliable/core` as pure functions over arrays of
+Both live in `@mattral/core` as pure functions over arrays of
 `Execution`/`DriftEvent` records — see
 [`data-model.md`](./data-model.md#health-scoring) and
 [`data-model.md`](./data-model.md#drift-detection) for the algorithms
@@ -166,7 +166,7 @@ by the CLI, not by `core` or `storage` directly:
   drift (its `onDrift` callback) — a schema change caught mid-production,
   not just at the next scheduled check.
 
-Delivery is a separate concern, `@mcp-reliable/notifier`: a `Notifier`
+Delivery is a separate concern, `@mattral/notifier`: a `Notifier`
 interface with `WebhookNotifier` (generic JSON) and `SlackNotifier`
 (Slack incoming-webhook format) implementations, composable via
 `CompositeNotifier`. Neither ever sends a full `Server` object over the
@@ -180,11 +180,11 @@ deliver them.
 
 ## REST API and dashboard
 
-`@mcp-reliable/server` wraps a `ReliabilityStore` in a small Hono app
+`@mattral/server` wraps a `ReliabilityStore` in a small Hono app
 (`packages/server/src/app.ts`) exposing servers, tools, executions, drift
 events, health scores, and alerts as JSON over HTTP, plus a batch
 `GET /api/servers/health-summary` for the dashboard's fleet view. The same
-process also serves `@mcp-reliable/dashboard`'s built static assets
+process also serves `@mattral/dashboard`'s built static assets
 (`packages/server/src/static.ts`, mounted only if the dashboard has been
 built — the API works standalone otherwise). `resolveDashboardDist`
 checks a bundled `dashboard-dist/` (copied into the package at publish
@@ -195,7 +195,7 @@ monorepo-local `packages/dashboard/dist` for development — see
 
 ## Agent interface
 
-`@mcp-reliable/agent-interface` is the "Agent" half of the spec's "Dual
+`@mattral/agent-interface` is the "Agent" half of the spec's "Dual
 interface (Human + Agent)" principle — the dashboard/REST API serve
 humans, this serves MCP clients directly. `mcp-reliable mcp` runs it over
 stdio: six tools (`list_servers`, `get_server_health`,

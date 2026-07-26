@@ -8,24 +8,24 @@ prepared and verified up to the point where your credentials take over
 (see [`docs/decisions/0012-v1-release-preparation.md`](./docs/decisions/0012-v1-release-preparation.md)
 for what "verified" means for each piece).
 
-## 0. One-time npm scope setup (only needed the first time you publish)
+## 0. npm scope — already resolved, nothing to set up
 
-Seven packages publish under the `@mcp-reliable/` scope, plus one
-(`mcp-reliable` itself, the CLI) unscoped. Publishing under a scope
-requires you to control that scope on npm — pick one:
+Seven packages publish under the `@mattral/` scope, plus one
+(`mcp-reliable` itself, the CLI) unscoped.
 
-- **Create a free npm organization named `mcp-reliable`** at
-  <https://www.npmjs.com/org/create> (public packages are free under an
-  org; you only pay for private ones). This is the option that keeps
-  every package name exactly as written in this repo.
-- **Or: rename the scope** to an npm username/org you already control
-  (e.g. if your npm username is `mattral`, change every
-  `"@mcp-reliable/..."` name in `packages/*/package.json` — and every
-  place other packages `dependencies` reference them — to
-  `"@mattral/..."`). More edits, but no new org to create.
+The original plan was a dedicated `@mcp-reliable` npm organization, but
+that name was already taken when we went to create it — unrelated to
+whether any code existed there; npm organization names and package names
+are reserved separately. Rather than fight over an alternative org name,
+every package publishes under **your personal npm scope, `@mattral`**
+instead. Personal scopes are automatic the moment you have an npm
+account — there is no "create an org" step for this option, unlike the
+original plan. See
+[`docs/decisions/0013-npm-scope-rename.md`](./docs/decisions/0013-npm-scope-rename.md)
+for the full account.
 
-Either way, run `npm login` once if you haven't already, and confirm with
-`npm whoami`.
+Just run `npm login` if you haven't already, and confirm with `npm whoami`
+that it shows `mattral`.
 
 ## 1. Pre-flight check
 
@@ -41,7 +41,7 @@ pass clean.
 
 ## 2. Build the dashboard before publishing the server package
 
-`@mcp-reliable/server` bundles the dashboard's build output into itself
+`@mattral/server` bundles the dashboard's build output into itself
 at publish time (`prepublishOnly` runs `scripts/copy-dashboard.mjs` — see
 ADR 0012 for why). `npm run build` at the root already builds the
 dashboard, so if you just ran step 1, this is already done. If you're
@@ -83,8 +83,8 @@ by step; this is the convenience version for next time).
 
 ```
 npm view mcp-reliable version
-npm view @mcp-reliable/core version
-npm view @mcp-reliable/server version
+npm view @mattral/core version
+npm view @mattral/server version
 ```
 
 Each should print `1.0.0`. Then, in a scratch directory *outside* this

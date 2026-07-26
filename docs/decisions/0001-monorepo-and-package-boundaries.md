@@ -19,19 +19,19 @@ workspaces support is sufficient at this scale and adds no extra tooling
 dependency), with packages split by responsibility rather than by
 deployment artifact:
 
-- `@mcp-reliable/core` — pure data model, health scoring, drift detection.
+- `@mattral/core` — pure data model, health scoring, drift detection.
   No I/O. This boundary exists specifically so the reliability *math* can
   be unit tested without a database or network call, and so it's reusable
   by both the CLI and (later) the dashboard without either depending on
   the other.
-- `@mcp-reliable/storage` — the only package that knows SQLite exists,
+- `@mattral/storage` — the only package that knows SQLite exists,
   behind a `ReliabilityStore` interface `core` and `collector` never see
   the concrete implementation of.
-- `@mcp-reliable/collector` — depends on `core` (for fingerprinting/drift)
+- `@mattral/collector` — depends on `core` (for fingerprinting/drift)
   and `storage` (to persist what it observes), plus the MCP SDK. This is
   the only package that talks to a monitored MCP server.
 - `mcp-reliable` (the CLI, published unscoped — see
-  `decisions/0012-v1-release-preparation.md`) and `@mcp-reliable/server` —
+  `decisions/0012-v1-release-preparation.md`) and `@mattral/server` —
   two independent consumers of `core`/`storage`/`collector`. Neither
   depends on the other. `server` doesn't depend on the CLI even though
   they duplicate a small amount of config-resolution logic — see ADR 0006.

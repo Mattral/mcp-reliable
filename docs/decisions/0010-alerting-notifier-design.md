@@ -18,7 +18,7 @@ requirement.
 
 ### Transition-based alerting, not threshold-based
 
-`detectHealthDegradation` (`@mcp-reliable/core`) only fires when a
+`detectHealthDegradation` (`@mattral/core`) only fires when a
 server's health-score *band* changes (healthy → warning, warning →
 critical, or vice versa on recovery) — not on every check where a server
 happens to still be below some threshold. This mirrors
@@ -51,7 +51,7 @@ scheduled `monitor` tick.
 
 ### Webhook + Slack as two notifier implementations behind one interface
 
-`@mcp-reliable/notifier` defines a single `Notifier` interface
+`@mattral/notifier` defines a single `Notifier` interface
 (`notify(payload): Promise<void>`), with `WebhookNotifier` (generic JSON
 POST — the escape hatch for PagerDuty, a custom internal endpoint, etc.)
 and `SlackNotifier` (formats the same payload as a plain Slack
@@ -103,7 +103,7 @@ own justification (or, here, its own fix).
 - `mcp-reliable monitor --webhook <url>` / `--slack-webhook <url>` and
   `mcp-reliable proxy <id> --webhook <url> -- ...` (see
   `docs/cli-reference.md`) are the two integration points; there is no
-  server-side (REST API) alerting configuration yet — `@mcp-reliable/server`
+  server-side (REST API) alerting configuration yet — `@mattral/server`
   only ever reads `Alert` records today, it doesn't create or deliver them.
 - `monitor` now also computes and persists a trailing-window health score
   every tick (not just when `report` runs), which further densifies the

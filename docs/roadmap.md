@@ -23,7 +23,7 @@ Legend: ✅ done and tested · 🚧 partially done · ⬜ not started
 | Clean CLI (`monitor`, `report`, `add-server`) | ✅ | Plus `init`, `servers`, `remove-server`, `proxy` (needed to actually generate real traffic data — see `architecture.md#collection-model`). |
 | Local-first storage (SQLite, zero config) | ✅ | `SqliteStore`, `.mcp-reliable/data.sqlite` convention. |
 | stdio + SSE support | 🚧 | `HealthChecker` supports stdio/SSE/HTTP for pull-based checks. The traffic-observing proxy (`StdioProxyCollector`) supports **stdio only** — an SSE/HTTP proxy is a materially different problem (there's no "child process" to sit in front of) and isn't built yet. |
-| Basic web dashboard | ✅ | `packages/dashboard` — fleet overview + server detail, served as static assets by `@mcp-reliable/server`. See `dashboard-design.md` for what shipped vs. the original plan, and `decisions/0008-dashboard-stack-and-duplication.md` for the implementation decisions. |
+| Basic web dashboard | ✅ | `packages/dashboard` — fleet overview + server detail, served as static assets by `@mattral/server`. See `dashboard-design.md` for what shipped vs. the original plan, and `decisions/0008-dashboard-stack-and-duplication.md` for the implementation decisions. |
 
 ## P1 — Production Readiness
 
@@ -33,8 +33,8 @@ Legend: ✅ done and tested · 🚧 partially done · ⬜ not started
 | Token usage tracking | ⬜ | `Execution.inputBytes`/`outputBytes` are byte-size proxies, explicitly not token counts (see `data-model.md#execution`) — real token tracking needs a tokenizer matched to the calling agent's model, which mcp-reliable has no way to know today. |
 | Error classification | ⬜ | `Execution.errorMessage` is stored verbatim; there's no grouping/clustering of common failure modes yet. |
 | Multi-server fleet view | ✅ | The dashboard's fleet overview (`/`) lists every registered server with live status; `servers`/`monitor`/`report` also already operate over every registered server. |
-| Webhook + Slack alerting | ✅ | `@mcp-reliable/notifier` (`WebhookNotifier`, `SlackNotifier`, `CompositeNotifier`), wired into both `monitor` (`--webhook`/`--slack-webhook`) and `proxy` (live-traffic drift). All three `Alert` kinds are now actively produced — see `data-model.md#alert` and `decisions/0010-alerting-notifier-design.md`. |
-| Full MCP interface (agents can query health/drift) | ✅ | `@mcp-reliable/agent-interface`, run via `mcp-reliable mcp` (stdio). Six tools covering health, drift, alerts, and synthesized recommendations — see `decisions/0011-agent-interface-design.md`. No HTTP/SSE transport for it yet (stdio only, matching the traffic-observing proxy's current transport scope). |
+| Webhook + Slack alerting | ✅ | `@mattral/notifier` (`WebhookNotifier`, `SlackNotifier`, `CompositeNotifier`), wired into both `monitor` (`--webhook`/`--slack-webhook`) and `proxy` (live-traffic drift). All three `Alert` kinds are now actively produced — see `data-model.md#alert` and `decisions/0010-alerting-notifier-design.md`. |
+| Full MCP interface (agents can query health/drift) | ✅ | `@mattral/agent-interface`, run via `mcp-reliable mcp` (stdio). Six tools covering health, drift, alerts, and synthesized recommendations — see `decisions/0011-agent-interface-design.md`. No HTTP/SSE transport for it yet (stdio only, matching the traffic-observing proxy's current transport scope). |
 | Historical trends | ✅ | `HealthScore` snapshots (`recordHealthScore`/`listHealthScores`) now have a consumer: the dashboard's health-history line chart (`GET /api/servers/:id/health-history`), populated by every `report` run or `/health` call. |
 
 ## P2 — Advanced Capabilities
@@ -78,7 +78,7 @@ engine, OpenTelemetry exporter, ML-based anomaly detection, team features
   scale yet (see `dashboard-design.md`'s API-additions status).
 - The dashboard uses hash-based routing (`/#/servers/:id`) rather than
   clean path-based URLs, a deliberate tradeoff to avoid needing SPA
-  fallback routing in `@mcp-reliable/server` — see
+  fallback routing in `@mattral/server` — see
   `decisions/0008-dashboard-stack-and-duplication.md`.
 - Alerting configuration (`--webhook`/`--slack-webhook`) is CLI-flag-only,
   per-invocation — there's no persisted, per-server notification config,
