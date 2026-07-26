@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-reliable/notifier",
+  "name": "@mattral/notifier",
   "version": "1.0.0",
   "description": "Webhook and Slack delivery for mcp-reliable alerts",
   "type": "module",
@@ -43,7 +43,7 @@
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@mcp-reliable/core": "^1.0.0"
+    "@mattral/core": "^1.0.0"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",

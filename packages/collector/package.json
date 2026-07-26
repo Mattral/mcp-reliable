@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-reliable/collector",
+  "name": "@mattral/collector",
   "version": "1.0.0",
   "description": "Health checking and traffic-observing proxy collectors for MCP servers",
   "type": "module",
@@ -44,8 +44,8 @@
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@mcp-reliable/core": "^1.0.0",
-    "@mcp-reliable/storage": "^1.0.0",
+    "@mattral/core": "^1.0.0",
+    "@mattral/storage": "^1.0.0",
     "@modelcontextprotocol/sdk": "^1.29.0"
   },
   "devDependencies": {
