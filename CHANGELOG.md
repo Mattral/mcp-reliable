@@ -11,13 +11,22 @@ mechanically since 0.4.0.
 
 **Changed**
 
+- Every scoped package publishes under `@mattral/` (was `@mcp-reliable/`)
+  — the originally planned `@mcp-reliable` npm organization turned out to
+  already be taken when actually creating it, unrelated to whether any
+  code existed there. Personal npm scopes need no such creation step, so
+  publishing moved to the maintainer's own `@mattral` scope instead. Past
+  changelog entries below describe the repository as it actually was at
+  each point in its history and are left as `@mcp-reliable/*`, matching
+  what `package.json` really said at those commits — see
+  [`docs/decisions/0013-npm-scope-rename.md`](./docs/decisions/0013-npm-scope-rename.md).
 - The CLI package is now published unscoped as `mcp-reliable` (was
   `@mcp-reliable/cli`) — matches its own `bin` entry and the original
   spec's `npx mcp-reliable init` framing. Nothing else in the repo
   depended on the old scoped name.
-- `@mcp-reliable/server` now bundles the dashboard's built output into
+- `@mattral/server` now bundles the dashboard's built output into
   itself at publish time (`prepublishOnly` → `scripts/copy-dashboard.mjs`),
-  fixing a real gap: a standalone `npm install @mcp-reliable/server`
+  fixing a real gap: a standalone `npm install @mattral/server`
   (outside this monorepo) previously could never find the dashboard at
   all, since npm doesn't preserve monorepo sibling directories. Verified
   by simulating a standalone install (hiding the monorepo sibling
@@ -35,7 +44,8 @@ mechanically since 0.4.0.
   (npm scope setup, publish order, tagging, GitHub release).
 - `RELEASE_NOTES_v1.0.0.md` — this release's announcement-style writeup.
 - ADR 0012 documenting every decision above, including the
-  dashboard-bundling bug found while preparing to actually publish.
+  dashboard-bundling bug found while preparing to actually publish, and
+  ADR 0013 documenting the npm scope rename specifically.
 
 ## 0.4.0 — Agent-facing MCP interface
 
