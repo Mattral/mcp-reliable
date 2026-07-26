@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-reliable/reference-mcp-server",
+  "name": "@mattral/reference-mcp-server",
   "version": "1.0.0",
   "private": true,
   "description": "A tiny stdio MCP server used to exercise mcp-reliable's collector, and as a getting-started demo target",
