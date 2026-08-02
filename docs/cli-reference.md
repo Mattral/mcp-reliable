@@ -94,6 +94,10 @@ and, if configured, delivers alerts every tick:
                   note in architecture.md about per-server intervals.
 --window <ms>     trailing window for health-degradation scoring (default
                   3600000, i.e. 1h)
+--timeout <ms>    per-check connection timeout for the initialize
+                  handshake and tools/list round trip (default 10000).
+                  Raise this for servers that need to cold-install
+                  themselves via npx within the check window.
 --webhook <url>          POST a JSON payload when an alert opens or resolves
 --slack-webhook <url>    post to a Slack incoming-webhook URL when an alert opens or resolves
 --db <path>
@@ -103,6 +107,7 @@ and, if configured, delivers alerts every tick:
 mcp-reliable monitor                       # live view of every server, every 30s, until Ctrl+C
 mcp-reliable monitor --server my-server --once
 mcp-reliable monitor --interval 5000
+mcp-reliable monitor --timeout 30000     # give a slow-to-cold-start (e.g. npx) server more room
 mcp-reliable monitor --webhook https://example.com/hooks/mcp-reliable
 mcp-reliable monitor --slack-webhook https://hooks.slack.com/services/…
 ```

@@ -45,6 +45,7 @@
   },
   "scripts": {
     "build": "tsc -b",
+    "start": "node dist/index.js",
     "clean": "rimraf dist dashboard-dist *.tsbuildinfo",
     "prepublishOnly": "node scripts/copy-dashboard.mjs"
   },
