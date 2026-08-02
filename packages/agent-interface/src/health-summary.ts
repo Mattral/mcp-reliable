@@ -1,4 +1,4 @@
-import { computeHealthScore, type HealthScore, type Server } from "@mattral/core";
+import { computeHealthScore, summarizeErrorCategories, type ErrorCategorySummary, type HealthScore, type Server } from "@mattral/core";
 import type { ReliabilityStore } from "@mattral/storage";
 
 const HEALTH_CHECK_TOOL_NAME = "__health_check__";
@@ -9,6 +9,8 @@ export interface AgentHealthSummary {
   unresolvedAlertCount: number;
   recentDriftCount: number;
   recentHighSeverityDriftCount: number;
+  /** Classified breakdown of proxy-observed failures in the trailing window. Empty if there were none. */
+  errorSummary: ErrorCategorySummary[];
 }
 
 /**
@@ -52,6 +54,7 @@ export function computeAgentHealthSummary(
   const unresolvedAlertCount = store.listAlerts({ serverId: server.id, onlyUnresolved: true }).length;
   const recentDriftCount = driftEvents.length;
   const recentHighSeverityDriftCount = driftEvents.filter((e) => e.severity === "high").length;
+  const errorSummary = summarizeErrorCategories(proxyExecutions);
 
-  return { reachable, healthScore, unresolvedAlertCount, recentDriftCount, recentHighSeverityDriftCount };
+  return { reachable, healthScore, unresolvedAlertCount, recentDriftCount, recentHighSeverityDriftCount, errorSummary };
 }
