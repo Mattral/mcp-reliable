@@ -108,4 +108,31 @@ describe("computeAgentHealthSummary", () => {
     expect(summary.recentDriftCount).toBe(2);
     expect(summary.recentHighSeverityDriftCount).toBe(1);
   });
+
+  it("includes a classified error breakdown from proxy failures within the window", () => {
+    store.recordExecution({
+      id: randomUUID(),
+      serverId: server.id,
+      toolName: "search",
+      startedAt: Date.now(),
+      durationMs: 20,
+      success: false,
+      errorMessage: "401 Unauthorized",
+      source: "proxy"
+    });
+    store.recordExecution({
+      id: randomUUID(),
+      serverId: server.id,
+      toolName: "search",
+      startedAt: Date.now(),
+      durationMs: 20,
+      success: true,
+      source: "proxy"
+    });
+
+    const summary = computeAgentHealthSummary(store, server, 3_600_000);
+    expect(summary.errorSummary).toHaveLength(1);
+    expect(summary.errorSummary[0]?.category).toBe("auth");
+    expect(summary.errorSummary[0]?.count).toBe(1);
+  });
 });
