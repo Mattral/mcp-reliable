@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased
+
+Post-1.0 hardening pass — see
+[`decisions/0014-post-1.0-hardening-pass.md`](./docs/decisions/0014-post-1.0-hardening-pass.md)
+for the full account of each item below.
+
+**Fixed / Added**
+
+- `mcp-reliable monitor` gained a `--timeout <ms>` flag exposing
+  `HealthChecker`'s previously-hard-coded connection timeout (default
+  10s). Extracted the shared `parsePositiveMs` validation helper in the
+  process — the third call site (`--interval`/`--window`/`--timeout`)
+  needing identical parsing logic, per ADR 0006's "rule of three."
+- `packages/server` gained a `start` script (`npm run start` → `node
+  dist/index.js`) — previously only runnable via that exact direct
+  invocation.
+- `PUBLISHING.md`'s post-publish smoke-test example no longer assumes a
+  Unix shell (`/tmp/...`); now gives macOS/Linux, PowerShell, and
+  `cmd.exe` versions.
+- `PUBLISHING.md` documents a known, harmless npm CLI warning
+  ([npm/cli#7302](https://github.com/npm/cli/issues/7302)) seen during
+  publish, and adds tag-verification guidance to the tag/push step.
+- `README.md` now links directly to the live npm packages and carries
+  the same "verified live" framing `RELEASE_NOTES_v1.0.0.md` already had.
+- `HANDOFF.md` now lives in the repo root instead of being a separate,
+  out-of-repo document handed to each new assistant session.
+
+**Investigated, documented, not code-changed**
+
+- Confirmed the `v1.0.0` git tag on the real GitHub remote is stale —
+  points six commits behind `HEAD`, before the `@mcp-reliable` →
+  `@mattral` scope rename. Fix commands recorded in `PUBLISHING.md`;
+  actually running them needs the maintainer's own GitHub write access.
+- Re-ran `npm audit` and traced all four current advisories to their
+  actual reachability (previously only one, `esbuild`, was documented).
+  Three of the four are confirmed not exploitable in this project's real
+  usage — see `docs/testing.md#dependency-audit-status`. No dependency
+  version changes made; nothing here was actually reachable at runtime.
+
 ## 1.0.0 — First stable release
 
 Every publishable package moves to `1.0.0` together (see

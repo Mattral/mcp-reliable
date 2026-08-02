@@ -11,6 +11,14 @@ Everything still ⬜/🚧 is post-1.0 roadmap, not a blocker that was missed —
 P2 in particular was framed by the original spec itself as "Advanced
 Capabilities," later-stage work, not part of the release-readiness bar.
 
+**Post-1.0 hardening pass** (see
+[`decisions/0014-post-1.0-hardening-pass.md`](./decisions/0014-post-1.0-hardening-pass.md)):
+confirmed and documented a stale `v1.0.0` git tag (fix commands in
+`PUBLISHING.md`, awaiting the maintainer's own `git push`), re-verified
+the full dependency audit rather than trusting the old single-advisory
+note, added `monitor --timeout`, a `start` script for `@mattral/server`,
+and cross-platform fixes to `PUBLISHING.md`.
+
 Legend: ✅ done and tested · 🚧 partially done · ⬜ not started
 
 ## P0 — Foundation (MVP)
@@ -65,9 +73,18 @@ engine, OpenTelemetry exporter, ML-based anomaly detection, team features
 
 ## Known limitations to fix soon (not spec gaps, just rough edges)
 
+- `npm audit` flags four dev/transitive advisories as of the last check
+  (up from one at v1.0.0) — all traced and confirmed not reachable in
+  this project's actual runtime usage; see
+  `testing.md#dependency-audit-status` and
+  `decisions/0014-post-1.0-hardening-pass.md` for the per-advisory
+  reasoning.
 - `monitor`'s polling loop uses one shared `--interval` for every selected
   server rather than honoring each server's own `healthCheckIntervalMs`
-  (which is currently stored but not enforced).
+  (which is currently stored but not enforced). Note: the connection
+  *timeout* (separate from the polling interval) is configurable as of
+  this pass via `monitor --timeout <ms>` — this remaining item is only
+  about per-server polling cadence, not the timeout.
 - `add-server` has no way to pass per-check environment variable overrides
   for comparing two schema versions of the same server id — the
   getting-started guide's drift demo works around this by registering a
@@ -92,5 +109,3 @@ engine, OpenTelemetry exporter, ML-based anomaly detection, team features
   convention (small, deliberate duplication — see
   `decisions/0006-server-config-duplication.md`), which is worth revisiting
   if a third consumer of that convention shows up.
-- `npm audit` flags a dev-only `esbuild`/`vitest` advisory — see
-  `testing.md#dependency-audit-status`.
