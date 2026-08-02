@@ -36,7 +36,7 @@ npm run release:check
 ```
 
 This runs lint, a full typecheck, a full build, and the entire test suite
-(should be 195 tests passing). Don't publish anything if this doesn't
+(should be 200 tests passing). Don't publish anything if this doesn't
 pass clean.
 
 ## 2. Build the dashboard before publishing the server package
@@ -73,6 +73,22 @@ Every package.json already sets `"publishConfig": { "access": "public" }`,
 so plain `npm publish` (no `--access public` flag needed) works even
 though these are scoped packages.
 
+**A scary-looking but harmless warning you may see during `npm publish`
+for `cli` or `server`:**
+
+```
+npm warn publish npm auto-corrected some errors in your package.json when publishing. Please run "npm pkg fix" to address these errors.
+npm warn publish bin[...] script name ... was invalid and removed
+```
+
+This is a known bug in the npm CLI itself
+([npm/cli#7302](https://github.com/npm/cli/issues/7302)), not a problem
+with this project's `package.json` files. It showed up during the actual
+`v1.0.0` publish and was confirmed harmless at the time by inspecting the
+published tarball on the registry — the `bin` entry was intact and `npx
+mcp-reliable` worked correctly despite the warning. Safe to ignore; don't
+"fix" it by changing `bin` field syntax based on the warning alone.
+
 Alternative, once you're comfortable with the above having worked once:
 `npm run release:publish` at the root runs all seven in one command via
 npm's `--workspace` flag (order handled by npm's own workspace dependency
@@ -91,11 +107,33 @@ Each should print `1.0.0`. Then, in a scratch directory *outside* this
 repo (important — this is the real test of whether a standalone install
 actually works, not just the monorepo dev setup):
 
-```
-mkdir /tmp/mcp-reliable-smoke && cd /tmp/mcp-reliable-smoke
+```bash
+# macOS / Linux
+mkdir -p /tmp/mcp-reliable-smoke && cd /tmp/mcp-reliable-smoke
 npx mcp-reliable@1.0.0 --version
 npx mcp-reliable@1.0.0 init
 ```
+
+```powershell
+# Windows PowerShell
+New-Item -ItemType Directory -Force "$env:TEMP\mcp-reliable-smoke" | Out-Null
+Set-Location "$env:TEMP\mcp-reliable-smoke"
+npx mcp-reliable@1.0.0 --version
+npx mcp-reliable@1.0.0 init
+```
+
+```cmd
+:: Windows cmd.exe
+mkdir "%TEMP%\mcp-reliable-smoke" 2>nul
+cd /d "%TEMP%\mcp-reliable-smoke"
+npx mcp-reliable@1.0.0 --version
+npx mcp-reliable@1.0.0 init
+```
+
+Since this project is actually run and published from Windows day to day
+(see the caution in `HANDOFF.md`), prefer the PowerShell/cmd form when
+verifying a real release — the Unix form is here for anyone publishing
+from a Linux/macOS machine instead.
 
 ## 5. Tag and push
 
@@ -103,6 +141,31 @@ npx mcp-reliable@1.0.0 init
 git tag -a v1.0.0 -m "v1.0.0"
 git push origin v1.0.0
 ```
+
+**Verify the tag actually points where you think it does before trusting
+it** — this bit the project for real once already. If `git tag -a`
+reports `"tag already exists"`, a tag was created earlier than you
+expect, possibly before some later doc/rename commits. Check:
+
+```
+git log v1.0.0 --oneline -1     # what the tag currently points to
+git log HEAD --oneline -1       # what you actually want it to point to
+```
+
+If those differ, the tag is stale. Fix it by deleting and recreating at
+the current `HEAD`, then force-pushing:
+
+```
+git tag -d v1.0.0
+git tag -a v1.0.0 -m "v1.0.0" HEAD
+git push origin v1.0.0 --force
+```
+
+(This exact scenario happened during the real `v1.0.0` release: the tag
+was created before the `@mcp-reliable` → `@mattral` scope rename
+finished, leaving it pointing at a commit whose `package.json` files
+don't match what's actually on npm. See ADR 0014 for the full account and
+confirmation of the fix.)
 
 ## 6. GitHub release
 
