@@ -17,6 +17,8 @@ export interface MonitorOptions {
   interval?: string;
   /** Trailing window (ms) used to compute the health score checked for degradation. Default 1h. */
   window?: string;
+  /** Connection timeout (ms) for each health check's initialize handshake and tools/list round trip. Default 10s. */
+  timeout?: string;
   webhook?: string;
   slackWebhook?: string;
   db?: string;
@@ -24,6 +26,22 @@ export interface MonitorOptions {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Parses a CLI flag's string value as a positive number of milliseconds,
+ * falling back to a default when the flag wasn't passed. `--interval` and
+ * `--window` each did this inline until `--timeout` became a third call
+ * site — per the "rule of three" this project applies to duplication (see
+ * docs/decisions/0006-server-config-duplication.md), that's the trigger to
+ * extract it, not before.
+ */
+export function parsePositiveMs(value: string | undefined, flagName: string, defaultMs: number): number {
+  const ms = value === undefined ? defaultMs : Number(value);
+  if (!Number.isFinite(ms) || ms <= 0) {
+    throw new CliError(`${flagName} must be a positive number of milliseconds, got "${value}".`);
+  }
+  return ms;
 }
 
 /**
@@ -198,18 +216,13 @@ export function runMonitor(options: MonitorOptions): Promise<void> {
         );
       }
 
-      const intervalMs = options.interval ? Number(options.interval) : 30_000;
-      if (!Number.isFinite(intervalMs) || intervalMs <= 0) {
-        throw new CliError(`--interval must be a positive number of milliseconds, got "${options.interval}".`);
-      }
-      const degradationWindowMs = options.window ? Number(options.window) : 3_600_000;
-      if (!Number.isFinite(degradationWindowMs) || degradationWindowMs <= 0) {
-        throw new CliError(`--window must be a positive number of milliseconds, got "${options.window}".`);
-      }
+      const intervalMs = parsePositiveMs(options.interval, "--interval", 30_000);
+      const degradationWindowMs = parsePositiveMs(options.window, "--window", 3_600_000);
+      const timeoutMs = parsePositiveMs(options.timeout, "--timeout", 10_000);
 
       const notifier = createNotifier({ webhookUrl: options.webhook, slackWebhookUrl: options.slackWebhook });
 
-      const checker = new HealthChecker({ store });
+      const checker = new HealthChecker({ store, timeoutMs });
       const results = new Map<string, HealthCheckResult>();
 
       while (true) {

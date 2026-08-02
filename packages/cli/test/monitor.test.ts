@@ -4,6 +4,7 @@ import type { HealthCheckResult } from "@mattral/collector";
 import type { DriftEvent, Server } from "@mattral/core";
 import { SqliteStore } from "@mattral/storage";
 import {
+  parsePositiveMs,
   reconcileHealthDegradationAlert,
   reconcileUnreachableAlert,
   recordDriftAlerts
@@ -30,6 +31,28 @@ function result(overrides: Partial<HealthCheckResult> = {}): HealthCheckResult {
     ...overrides
   };
 }
+
+describe("parsePositiveMs", () => {
+  it("falls back to the default when no value was passed", () => {
+    expect(parsePositiveMs(undefined, "--timeout", 10_000)).toBe(10_000);
+  });
+
+  it("parses a valid numeric string", () => {
+    expect(parsePositiveMs("5000", "--timeout", 10_000)).toBe(5000);
+  });
+
+  it("rejects zero", () => {
+    expect(() => parsePositiveMs("0", "--timeout", 10_000)).toThrow(/--timeout must be a positive number/);
+  });
+
+  it("rejects negative values", () => {
+    expect(() => parsePositiveMs("-500", "--interval", 30_000)).toThrow(/--interval must be a positive number/);
+  });
+
+  it("rejects non-numeric input", () => {
+    expect(() => parsePositiveMs("soon", "--window", 3_600_000)).toThrow(/--window must be a positive number/);
+  });
+});
 
 describe("reconcileUnreachableAlert", () => {
   let store: SqliteStore;
