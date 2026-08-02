@@ -1,11 +1,29 @@
 # mcp-reliable
 
+[![npm: mcp-reliable](https://img.shields.io/npm/v/mcp-reliable.svg?label=mcp-reliable)](https://www.npmjs.com/package/mcp-reliable)
+[![npm: @mattral/core](https://img.shields.io/npm/v/%40mattral%2Fcore.svg?label=%40mattral%2Fcore)](https://www.npmjs.com/package/@mattral/core)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 Runtime observability and reliability for the Model Context Protocol
 ecosystem. Where tools like `mcp-observatory` audit servers before
 deployment and `inspector` helps you debug one by hand, `mcp-reliable`
 watches servers *while they're running*: is this server up right now, is a
 given tool getting slower or less reliable over time, and did its schema or
 output shape just change out from under the agents calling it.
+
+**Live on npm, verified with a real standalone install** — not just a
+local monorepo checkout — as
+[`mcp-reliable`](https://www.npmjs.com/package/mcp-reliable) plus six
+scoped libraries under
+[`@mattral`](https://www.npmjs.com/~mattral):
+[`@mattral/core`](https://www.npmjs.com/package/@mattral/core),
+[`@mattral/storage`](https://www.npmjs.com/package/@mattral/storage),
+[`@mattral/collector`](https://www.npmjs.com/package/@mattral/collector),
+[`@mattral/notifier`](https://www.npmjs.com/package/@mattral/notifier),
+[`@mattral/agent-interface`](https://www.npmjs.com/package/@mattral/agent-interface),
+and [`@mattral/server`](https://www.npmjs.com/package/@mattral/server).
+See [`docs/decisions/0013-npm-scope-rename.md`](./docs/decisions/0013-npm-scope-rename.md)
+for why `@mattral` and not a dedicated `@mcp-reliable` org.
 
 Full design rationale lives in [`docs/`](./docs) — start with
 [`docs/architecture.md`](./docs/architecture.md) if you want the "how" and
@@ -69,7 +87,7 @@ git clone https://github.com/Mattral/mcp-reliable.git
 cd mcp-reliable
 npm install
 npm run build
-npm test   # 195 tests, none of them mocked at the protocol level — see docs/testing.md
+npm test   # 200 tests, none of them mocked at the protocol level — see docs/testing.md
 ```
 
 ```bash
