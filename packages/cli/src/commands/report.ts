@@ -1,6 +1,6 @@
 import ora from "ora";
 import chalk from "chalk";
-import { computeHealthScore, type Server } from "@mattral/core";
+import { computeHealthScore, summarizeErrorCategories, type ErrorCategorySummary, type Server } from "@mattral/core";
 import { HEALTH_CHECK_TOOL_NAME } from "@mattral/collector";
 import type { ReliabilityStore } from "@mattral/storage";
 import { openStore } from "../config.js";
@@ -20,6 +20,8 @@ export interface ServerReport {
   windowEnd: number;
   reachabilityRate: number | undefined; // undefined = no health checks recorded in window
   healthScore: ReturnType<typeof computeHealthScore> | undefined; // undefined = no live tool traffic in window
+  /** Classified breakdown of proxy-observed failures in this window. Empty if there were none (including no traffic at all). */
+  errorSummary: ErrorCategorySummary[];
 }
 
 /**
@@ -65,7 +67,14 @@ export function buildServerReport(
 
   if (healthScore) store.recordHealthScore(healthScore);
 
-  return { server, windowStart, windowEnd, reachabilityRate, healthScore };
+  return {
+    server,
+    windowStart,
+    windowEnd,
+    reachabilityRate,
+    healthScore,
+    errorSummary: summarizeErrorCategories(proxyExecutions)
+  };
 }
 
 function printReport(report: ServerReport, showDrift: boolean, store: ReliabilityStore): void {
@@ -86,6 +95,14 @@ function printReport(report: ServerReport, showDrift: boolean, store: Reliabilit
     console.log(`  Tool health score: ${formatScore(hs.score)} / 100  (${hs.sampleCount} calls)`);
     console.log(`  Success rate: ${formatPercent(hs.successRate)}`);
     console.log(`  Latency: p50 ${formatMs(hs.p50LatencyMs)}, p95 ${formatMs(hs.p95LatencyMs)}`);
+  }
+
+  if (report.errorSummary.length > 0) {
+    const total = report.errorSummary.reduce((sum, s) => sum + s.count, 0);
+    console.log(`  Errors (${total}), by likely cause:`);
+    for (const s of report.errorSummary) {
+      console.log(`    ${s.category}: ${s.count} (${formatPercent(s.ratio)}) — e.g. "${s.exampleMessage}"`);
+    }
   }
 
   if (showDrift) {

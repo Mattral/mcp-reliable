@@ -143,4 +143,69 @@ describe("buildServerReport", () => {
     const withDrift = buildServerReport(store, server, 0, 10_000);
     expect(withDrift.healthScore?.score).toBeLessThan(100);
   });
+
+  it("returns an empty errorSummary when there are no failures", () => {
+    const server = makeServer();
+    store.upsertServer(server);
+    store.recordExecution({
+      id: randomUUID(),
+      serverId: server.id,
+      toolName: "search",
+      startedAt: 1000,
+      durationMs: 20,
+      success: true,
+      source: "proxy"
+    });
+    const report = buildServerReport(store, server, 0, 10_000);
+    expect(report.errorSummary).toEqual([]);
+  });
+
+  it("classifies proxy failures into an errorSummary breakdown, ignoring health-check failures", () => {
+    const server = makeServer();
+    store.upsertServer(server);
+    store.recordExecution({
+      id: randomUUID(),
+      serverId: server.id,
+      toolName: HEALTH_CHECK_TOOL_NAME,
+      startedAt: 1000,
+      durationMs: 10,
+      success: false,
+      errorMessage: "connect ECONNREFUSED", // a health-check failure, should NOT count toward the proxy-traffic error breakdown
+      source: "health-check"
+    });
+    store.recordExecution({
+      id: randomUUID(),
+      serverId: server.id,
+      toolName: "search",
+      startedAt: 1001,
+      durationMs: 20,
+      success: false,
+      errorMessage: "429 Too Many Requests",
+      source: "proxy"
+    });
+    store.recordExecution({
+      id: randomUUID(),
+      serverId: server.id,
+      toolName: "search",
+      startedAt: 1002,
+      durationMs: 20,
+      success: false,
+      errorMessage: "rate limit hit, back off",
+      source: "proxy"
+    });
+    store.recordExecution({
+      id: randomUUID(),
+      serverId: server.id,
+      toolName: "search",
+      startedAt: 1003,
+      durationMs: 20,
+      success: true,
+      source: "proxy"
+    });
+
+    const report = buildServerReport(store, server, 0, 10_000);
+    expect(report.errorSummary).toHaveLength(1);
+    expect(report.errorSummary[0]?.category).toBe("rate-limit");
+    expect(report.errorSummary[0]?.count).toBe(2);
+  });
 });
