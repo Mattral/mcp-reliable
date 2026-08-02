@@ -12,6 +12,7 @@ import {
 } from "@mattral/core";
 import type { ReliabilityStore } from "@mattral/storage";
 import { JsonRpcFramer, type JsonRpcMessage } from "./json-rpc-framer.js";
+import { extractErrorMessage } from "./error-message.js";
 import { extractOutputPayload } from "./output-payload.js";
 
 export interface StdioProxyCollectorOptions {
@@ -198,7 +199,7 @@ export class StdioProxyCollector {
       startedAt: pending.startedAt,
       durationMs,
       success: !isError,
-      errorMessage: isError ? message.error?.message ?? "Tool call returned isError: true" : undefined,
+      errorMessage: isError ? extractErrorMessage(message) : undefined,
       outputSignature,
       inputBytes: pending.inputBytes,
       outputBytes,
