@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { kolmogorovSmirnovTest, percentile } from "./stats.js";
 import type { DriftEvent, Execution } from "./types.js";
 
 /**
@@ -123,5 +124,104 @@ export function detectOutputShapeDrift(options: OutputShapeDriftOptions): DriftE
     )}% of recent calls`,
     previousValue: baselineDominant.signature,
     newValue: recentDominant.signature
+  };
+}
+
+export interface LatencyDriftOptions {
+  serverId: string;
+  toolName: string;
+  /** An earlier window of executions establishing the "normal" latency distribution. */
+  baseline: readonly Execution[];
+  /** A more recent window of executions to compare against the baseline. */
+  recent: readonly Execution[];
+  /**
+   * Minimum successful executions required in *each* window before a KS
+   * test is even attempted. Default 20 — a KS test on smaller samples has
+   * weak enough power that it would mostly be reacting to noise; 20 is a
+   * common rule-of-thumb floor for the test to have reasonable
+   * sensitivity, not a value derived specifically for this project.
+   */
+  minSampleSize?: number;
+  /**
+   * Significance threshold for the KS test's p-value. Default 0.01, not
+   * the more conventional 0.05 — this check runs repeatedly as traffic
+   * accumulates (effectively many tests over a tool's lifetime, not one),
+   * so a looser threshold would produce false-positive alerts often enough
+   * to train operators to ignore them. 0.01 doesn't formally correct for
+   * repeated testing (a Bonferroni-style correction would be the rigorous
+   * fix) but is a deliberately conservative default given that gap exists.
+   */
+  alpha?: number;
+  /**
+   * Minimum relative shift in median latency required, on top of
+   * statistical significance, before reporting drift. Default 0.2 (20%).
+   * With enough samples, a KS test will call almost *any* real difference
+   * "significant" even when it's operationally meaningless (a 2ms shift on
+   * a 50ms baseline) — this floor is the same role `minDominance` plays for
+   * {@link detectOutputShapeDrift}: statistical significance alone isn't
+   * sufficient justification for an alert.
+   */
+  minRelativeShift?: number;
+  now?: number;
+}
+
+/**
+ * Statistical (P1) behavioral drift detector: flags a tool when the
+ * *distribution* of its successful calls' latency has shifted meaningfully
+ * between an earlier baseline window and a more recent window, using a
+ * two-sample Kolmogorov-Smirnov test (see `kolmogorovSmirnovTest` in
+ * `stats.ts` for the test itself and how it was verified).
+ *
+ * This catches a case the fixed p95 threshold in `computeHealthScore`
+ * cannot: a tool that's gotten durably slower (or faster) but not enough to
+ * cross that fixed threshold — see
+ * docs/decisions/0007-drift-detection-v0-scope.md and
+ * docs/decisions/0015-statistical-drift-detection.md.
+ *
+ * Only successful executions are compared — a spike in failures (which may
+ * complete unusually fast via an early error, or unusually slow via a
+ * timeout) is a *reliability* signal already covered by health scoring and
+ * unreachable alerts, not a latency-distribution signal in its own right.
+ *
+ * Returns `null` when either window has too few successful executions, the
+ * KS test isn't significant at `alpha`, or the shift in median latency is
+ * below `minRelativeShift` even if statistically significant.
+ */
+export function detectLatencyDrift(options: LatencyDriftOptions): DriftEvent | null {
+  const minSampleSize = options.minSampleSize ?? 20;
+  const alpha = options.alpha ?? 0.01;
+  const minRelativeShift = options.minRelativeShift ?? 0.2;
+
+  const baselineLatencies = options.baseline.filter((e) => e.success).map((e) => e.durationMs);
+  const recentLatencies = options.recent.filter((e) => e.success).map((e) => e.durationMs);
+  if (baselineLatencies.length < minSampleSize || recentLatencies.length < minSampleSize) {
+    return null;
+  }
+
+  const { pValue } = kolmogorovSmirnovTest(baselineLatencies, recentLatencies);
+  if (pValue > alpha) return null;
+
+  const baselineMedian = percentile(baselineLatencies, 50);
+  const recentMedian = percentile(recentLatencies, 50);
+  const relativeShift =
+    baselineMedian === 0 ? (recentMedian === 0 ? 0 : Number.POSITIVE_INFINITY) : Math.abs(recentMedian - baselineMedian) / baselineMedian;
+  if (relativeShift < minRelativeShift) return null;
+
+  const severity = relativeShift >= 1.0 || pValue <= 0.001 ? "high" : relativeShift >= 0.5 ? "medium" : "low";
+  const direction = recentMedian > baselineMedian ? "slower" : "faster";
+
+  return {
+    id: randomUUID(),
+    serverId: options.serverId,
+    toolName: options.toolName,
+    detectedAt: options.now ?? Date.now(),
+    kind: "statistical",
+    metric: "latency",
+    severity,
+    description: `Latency for tool "${options.toolName}" got ${direction}: median ${Math.round(
+      baselineMedian
+    )}ms → ${Math.round(recentMedian)}ms (KS test p=${pValue.toFixed(4)}, n=${baselineLatencies.length}/${recentLatencies.length})`,
+    previousValue: `median=${Math.round(baselineMedian)}ms, n=${baselineLatencies.length}`,
+    newValue: `median=${Math.round(recentMedian)}ms, n=${recentLatencies.length}`
   };
 }
