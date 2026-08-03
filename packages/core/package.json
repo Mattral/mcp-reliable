@@ -1,6 +1,6 @@
 {
   "name": "@mattral/core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Shared data model, health scoring, and drift detection algorithms for mcp-reliable",
   "type": "module",
   "license": "MIT",
