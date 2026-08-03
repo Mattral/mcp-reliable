@@ -12,6 +12,15 @@
  * input schema — this simulates the kind of change that
  * mcp-reliable's drift detector is built to catch. See docs/getting-started.md.
  *
+ * Set MCP_RELIABLE_ARTIFICIAL_DELAY_MS to an integer to make `echo` sleep
+ * that many milliseconds before responding (default 0, i.e. no change to
+ * the existing fast/instant baseline). This exists so `echo` can produce a
+ * genuine, reproducible latency-distribution shift for verifying
+ * statistical drift detection end-to-end — see
+ * docs/decisions/0015-statistical-drift-detection.md — rather than relying
+ * on `flaky`'s randomness, which isn't controllable enough to demonstrate a
+ * specific before/after shift on demand.
+ *
  * This file avoids TypeScript constructor parameter properties, enums,
  * and namespaces. That was originally so it could be run directly via
  * `node src/index.ts` with no build step, using Node's built-in
@@ -30,6 +39,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 
 const demoModeV2 = process.env.MCP_RELIABLE_DEMO_MODE === "v2";
+const artificialDelayMs = Number(process.env.MCP_RELIABLE_ARTIFICIAL_DELAY_MS ?? 0) || 0;
 
 const server = new McpServer({ name: "reference-mcp-server", version: "1.0.0" });
 
@@ -40,6 +50,9 @@ server.registerTool(
     inputSchema: { message: z.string().describe("Text to echo back") }
   },
   async ({ message }) => {
+    if (artificialDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, artificialDelayMs));
+    }
     const payload = demoModeV2 ? { echoed: message, respondedAt: new Date().toISOString() } : { message };
     return { content: [{ type: "text", text: JSON.stringify(payload) }] };
   }

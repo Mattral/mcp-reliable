@@ -54,6 +54,11 @@ program
   .option("--once", "Run a single check and exit (useful for scripting/CI)")
   .option("--interval <ms>", "Polling interval in milliseconds", "30000")
   .option("--window <ms>", "Trailing window for health-degradation scoring, in milliseconds", "3600000")
+  .option(
+    "--timeout <ms>",
+    "Connection timeout for each health check's initialize handshake and tools/list round trip, in milliseconds",
+    "10000"
+  )
   .option("--webhook <url>", "POST a JSON payload to this URL when an alert opens or resolves")
   .option("--slack-webhook <url>", "Post to this Slack incoming-webhook URL when an alert opens or resolves")
   .option("--db <path>", "Path to the SQLite database")
