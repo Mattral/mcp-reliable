@@ -4,8 +4,13 @@
  * `runMigrations` below should grow a `if (version < N)` branch that
  * migrates forward — there is deliberately no separate migrations table
  * for a single-file v0 schema (see docs/decisions/0002-storage-engine.md).
+ *
+ * v1 -> v2: `drift_events` gained a `metric` column (statistical drift
+ * detection needs to say *which* statistic drifted, since unlike
+ * "schema"/"output-shape" the "statistical" kind isn't self-describing —
+ * see docs/decisions/0015-statistical-drift-detection.md).
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS servers (
@@ -51,6 +56,7 @@ CREATE TABLE IF NOT EXISTS drift_events (
   tool_name TEXT NOT NULL,
   detected_at INTEGER NOT NULL,
   kind TEXT NOT NULL,
+  metric TEXT,
   severity TEXT NOT NULL,
   description TEXT NOT NULL,
   previous_value TEXT,
