@@ -60,7 +60,7 @@ export interface HealthScore {
   sampleCount: number;
 }
 
-export type DriftKind = "schema" | "output-shape";
+export type DriftKind = "schema" | "output-shape" | "statistical";
 export type DriftSeverity = "low" | "medium" | "high";
 
 export interface DriftEvent {
@@ -69,6 +69,8 @@ export interface DriftEvent {
   toolName: string;
   detectedAt: number;
   kind: DriftKind;
+  /** Only present when kind === "statistical" (which statistic drifted, e.g. "latency"). */
+  metric?: string;
   severity: DriftSeverity;
   description: string;
   previousValue?: string;

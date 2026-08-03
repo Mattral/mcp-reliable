@@ -56,7 +56,7 @@ export function registerAgentTools(server: McpServer, store: ReliabilityStore): 
     "list_drift_events",
     {
       description:
-        "List detected schema or output-shape changes for one server — a tool's contract changing out from under callers.",
+        "List detected schema, output-shape, or statistical (e.g. latency distribution) changes for one server — a tool's contract or behavior changing out from under callers.",
       inputSchema: {
         serverId: z.string().describe("A server id from list_servers"),
         sinceMs: z.number().int().nonnegative().optional().describe("Only events at/after this epoch-ms timestamp"),
