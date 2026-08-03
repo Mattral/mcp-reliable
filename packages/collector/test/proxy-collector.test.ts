@@ -161,4 +161,59 @@ describe("StdioProxyCollector", () => {
     await collector.stop();
     clientToProxy.end();
   }, 20_000);
+
+  it("detects both output-shape and statistical (latency) drift for real tool-call traffic across two windows", async () => {
+    // Window 1 ("baseline"): default server behavior, 20 real echo calls —
+    // matches detectLatencyDrift's and detectOutputShapeDrift's own
+    // minSampleSize defaults exactly, so this is the smallest input that
+    // can actually trigger either detector, keeping this real-subprocess
+    // test as fast as it can be while still being genuinely real.
+    const baselineSession = await setUpProxiedClient(serverId, store);
+    for (let i = 0; i < 20; i++) {
+      await baselineSession.client.callTool({ name: "echo", arguments: { message: `call-${i}` } });
+    }
+    await baselineSession.cleanup();
+
+    // Window 2 ("recent"): a fresh session against a server whose `echo`
+    // now returns a different output shape (MCP_RELIABLE_DEMO_MODE=v2) and
+    // is artificially slower (MCP_RELIABLE_ARTIFICIAL_DELAY_MS) — both
+    // env vars are read once at the child process's own startup, so a
+    // fresh session is required to change them; the store (and this
+    // collector's view of "baseline" via `listExecutions`) persists across
+    // sessions regardless.
+    const driftEvents: Array<{ kind: string; metric?: string; toolName: string }> = [];
+    const clientToProxy = new PassThrough();
+    const proxyToClient = new PassThrough();
+    const collector = new StdioProxyCollector({
+      serverId,
+      store,
+      command: process.execPath,
+      args: [referenceServerPath],
+      env: { MCP_RELIABLE_DEMO_MODE: "v2", MCP_RELIABLE_ARTIFICIAL_DELAY_MS: "150" },
+      input: clientToProxy,
+      output: proxyToClient,
+      onDrift: (event) => driftEvents.push(event)
+    });
+    collector.start();
+    const transport = new StreamPairTransport(clientToProxy, proxyToClient);
+    const client = new Client({ name: "test-client", version: "0.0.1" }, { capabilities: {} });
+    await client.connect(transport, { timeout: 10_000 });
+
+    for (let i = 0; i < 20; i++) {
+      await client.callTool({ name: "echo", arguments: { message: `call-${i}` } });
+    }
+
+    const echoDrift = driftEvents.filter((e) => e.toolName === "echo");
+    expect(echoDrift.some((e) => e.kind === "output-shape")).toBe(true);
+    expect(echoDrift.some((e) => e.kind === "statistical" && e.metric === "latency")).toBe(true);
+
+    // And both are durably persisted, not just delivered via the callback.
+    const stored = store.listDriftEvents({ serverId, toolName: "echo" });
+    expect(stored.some((e) => e.kind === "output-shape")).toBe(true);
+    expect(stored.some((e) => e.kind === "statistical" && e.metric === "latency")).toBe(true);
+
+    await client.close().catch(() => {});
+    await collector.stop();
+    clientToProxy.end();
+  }, 30_000);
 });
