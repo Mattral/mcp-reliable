@@ -1,6 +1,6 @@
 {
   "name": "mcp-reliable",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Runtime observability and reliability CLI for the Model Context Protocol ecosystem: health checks, a traffic-observing proxy, drift detection, webhook/Slack alerting, and an agent-facing MCP interface",
   "type": "module",
   "license": "MIT",
