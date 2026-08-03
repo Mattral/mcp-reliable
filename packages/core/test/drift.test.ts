@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectOutputShapeDrift, detectSchemaDrift } from "../src/drift.js";
+import { detectLatencyDrift, detectOutputShapeDrift, detectSchemaDrift } from "../src/drift.js";
 import { computeOutputSignature } from "../src/fingerprint.js";
 import type { Execution } from "../src/types.js";
 
@@ -14,6 +14,27 @@ function exec(outputSignature: string, success = true): Execution {
     outputSignature,
     source: "proxy"
   };
+}
+
+function execWithDuration(durationMs: number, success = true): Execution {
+  return {
+    id: crypto.randomUUID(),
+    serverId: "srv-1",
+    toolName: "search",
+    startedAt: Date.now(),
+    durationMs,
+    success,
+    source: "proxy"
+  };
+}
+
+/**
+ * A deterministic (not `Math.random()`-based) spread of `count` latencies
+ * around `base`, cycling through offsets in `[-spread/2, spread/2)` —
+ * varied enough to look like real traffic, exactly reproducible.
+ */
+function latencies(base: number, spread: number, count: number): number[] {
+  return Array.from({ length: count }, (_, i) => base + ((i * 7) % spread) - Math.floor(spread / 2));
 }
 
 describe("detectSchemaDrift", () => {
@@ -103,5 +124,77 @@ describe("detectOutputShapeDrift", () => {
     const event = detectOutputShapeDrift({ serverId: "s", toolName: "search", baseline, recent });
     expect(event).not.toBeNull();
     expect(event?.newValue).toBe(shapeB);
+  });
+});
+
+describe("detectLatencyDrift", () => {
+  it("returns null when either window has too few successful executions", () => {
+    const baseline = latencies(100, 20, 10).map((d) => execWithDuration(d)); // below default minSampleSize 20
+    const recent = latencies(100, 20, 25).map((d) => execWithDuration(d));
+    expect(detectLatencyDrift({ serverId: "s", toolName: "search", baseline, recent })).toBeNull();
+  });
+
+  it("returns null when the latency distribution hasn't meaningfully changed", () => {
+    const baseline = latencies(100, 20, 25).map((d) => execWithDuration(d));
+    const recent = latencies(100, 20, 25).map((d) => execWithDuration(d));
+    expect(detectLatencyDrift({ serverId: "s", toolName: "search", baseline, recent })).toBeNull();
+  });
+
+  it("returns null for a shift below minRelativeShift, even if the KS test finds it significant", () => {
+    const baseline = latencies(100, 10, 25).map((d) => execWithDuration(d));
+    const recent = latencies(105, 10, 25).map((d) => execWithDuration(d)); // ~5% shift, below the 20% default floor
+    expect(detectLatencyDrift({ serverId: "s", toolName: "search", baseline, recent })).toBeNull();
+  });
+
+  it("flags drift when latency has gotten durably slower", () => {
+    const baseline = latencies(100, 20, 25).map((d) => execWithDuration(d));
+    const recent = latencies(250, 20, 25).map((d) => execWithDuration(d));
+    const event = detectLatencyDrift({ serverId: "s", toolName: "search", baseline, recent });
+    expect(event).not.toBeNull();
+    expect(event?.kind).toBe("statistical");
+    expect(event?.metric).toBe("latency");
+    expect(event?.severity).toBe("high");
+    expect(event?.description).toContain("slower");
+    expect(event?.previousValue).toMatch(/median=\d+ms, n=25/);
+    expect(event?.newValue).toMatch(/median=\d+ms, n=25/);
+  });
+
+  it("flags drift when latency has gotten durably faster, in the opposite direction", () => {
+    const baseline = latencies(250, 20, 25).map((d) => execWithDuration(d));
+    const recent = latencies(100, 20, 25).map((d) => execWithDuration(d));
+    const event = detectLatencyDrift({ serverId: "s", toolName: "search", baseline, recent });
+    expect(event).not.toBeNull();
+    expect(event?.description).toContain("faster");
+  });
+
+  it("ignores failed executions when comparing latency", () => {
+    const baseline = [
+      ...latencies(100, 20, 25).map((d) => execWithDuration(d)),
+      ...latencies(9999, 5, 10).map((d) => execWithDuration(d, false)) // wildly different, but failed - shouldn't count
+    ];
+    const recent = latencies(100, 20, 25).map((d) => execWithDuration(d));
+    expect(detectLatencyDrift({ serverId: "s", toolName: "search", baseline, recent })).toBeNull();
+  });
+
+  it("respects a stricter minSampleSize override even when the shift is dramatic", () => {
+    const baseline = latencies(100, 20, 25).map((d) => execWithDuration(d));
+    const recent = latencies(400, 20, 25).map((d) => execWithDuration(d));
+    expect(
+      detectLatencyDrift({ serverId: "s", toolName: "search", baseline, recent, minSampleSize: 30 })
+    ).toBeNull();
+  });
+
+  it("respects a looser minRelativeShift override, flagging a shift the default floor would ignore", () => {
+    const baseline = latencies(100, 10, 25).map((d) => execWithDuration(d));
+    const recent = latencies(108, 10, 25).map((d) => execWithDuration(d)); // ~8% shift
+    expect(detectLatencyDrift({ serverId: "s", toolName: "search", baseline, recent })).toBeNull();
+    const event = detectLatencyDrift({
+      serverId: "s",
+      toolName: "search",
+      baseline,
+      recent,
+      minRelativeShift: 0.05
+    });
+    expect(event).not.toBeNull();
   });
 });

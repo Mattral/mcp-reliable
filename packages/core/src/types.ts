@@ -89,11 +89,20 @@ export const HealthScoreSchema = z.object({
 });
 export type HealthScore = z.infer<typeof HealthScoreSchema>;
 
-export const DriftKindSchema = z.enum(["schema", "output-shape"]);
+export const DriftKindSchema = z.enum(["schema", "output-shape", "statistical"]);
 export type DriftKind = z.infer<typeof DriftKindSchema>;
 
 export const DriftSeveritySchema = z.enum(["low", "medium", "high"]);
 export type DriftSeverity = z.infer<typeof DriftSeveritySchema>;
+
+/**
+ * Which statistic a `"statistical"` DriftEvent is about. Unlike `"schema"`
+ * and `"output-shape"`, `"statistical"` isn't self-describing on its own —
+ * see docs/decisions/0015-statistical-drift-detection.md. `undefined` for
+ * the other two kinds.
+ */
+export const DriftMetricSchema = z.enum(["latency"]);
+export type DriftMetric = z.infer<typeof DriftMetricSchema>;
 
 /** A detected behavioral or structural change in a tool. */
 export const DriftEventSchema = z.object({
@@ -102,6 +111,8 @@ export const DriftEventSchema = z.object({
   toolName: z.string().min(1),
   detectedAt: z.number().int(),
   kind: DriftKindSchema,
+  /** Only present when kind === "statistical" (which statistic drifted). */
+  metric: DriftMetricSchema.optional(),
   severity: DriftSeveritySchema,
   description: z.string().min(1),
   previousValue: z.string().optional(),
