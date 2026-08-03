@@ -1,4 +1,8 @@
 import { randomUUID } from "node:crypto";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Alert, DriftEvent, Execution, HealthScore, Server, Tool } from "@mattral/core";
 import { SqliteStore } from "../src/sqlite-store.js";
@@ -124,6 +128,43 @@ describe("SqliteStore", () => {
     expect(events[0]).toEqual(event);
   });
 
+  it("round-trips a statistical drift event, including its metric field", () => {
+    const server = makeServer();
+    store.upsertServer(server);
+    const event: DriftEvent = {
+      id: randomUUID(),
+      serverId: server.id,
+      toolName: "search",
+      detectedAt: Date.now(),
+      kind: "statistical",
+      metric: "latency",
+      severity: "medium",
+      description: "latency drifted",
+      previousValue: "median=100ms, n=25",
+      newValue: "median=180ms, n=25"
+    };
+    store.recordDriftEvent(event);
+    const events = store.listDriftEvents({ serverId: server.id });
+    expect(events).toHaveLength(1);
+    expect(events[0]).toEqual(event);
+  });
+
+  it("leaves metric undefined (not null) for drift kinds that don't set it", () => {
+    const server = makeServer();
+    store.upsertServer(server);
+    store.recordDriftEvent({
+      id: randomUUID(),
+      serverId: server.id,
+      toolName: "search",
+      detectedAt: Date.now(),
+      kind: "schema",
+      severity: "high",
+      description: "schema changed"
+    });
+    const [event] = store.listDriftEvents({ serverId: server.id });
+    expect(event?.metric).toBeUndefined();
+  });
+
   it("upserts health scores idempotently for the same window", () => {
     const server = makeServer();
     store.upsertServer(server);
@@ -176,5 +217,117 @@ describe("SqliteStore", () => {
         source: "proxy"
       })
     ).toThrow();
+  });
+});
+
+describe("schema migrations", () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "mcp-reliable-migration-test-"));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("migrates a v1 database (drift_events without a metric column) forward on open, preserving existing rows", () => {
+    const dbPath = join(dir, "v1.sqlite");
+
+    // Build a v1-shaped database by hand: the exact drift_events shape
+    // that shipped before the "metric" column existed (see
+    // docs/decisions/0015-statistical-drift-detection.md), with one
+    // pre-existing row, and user_version left at 1.
+    const raw = new Database(dbPath);
+    raw.pragma("foreign_keys = ON");
+    raw.exec(`
+      CREATE TABLE servers (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        transport_json TEXT NOT NULL,
+        tags_json TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        health_check_interval_ms INTEGER NOT NULL
+      );
+      CREATE TABLE drift_events (
+        id TEXT PRIMARY KEY,
+        server_id TEXT NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+        tool_name TEXT NOT NULL,
+        detected_at INTEGER NOT NULL,
+        kind TEXT NOT NULL,
+        severity TEXT NOT NULL,
+        description TEXT NOT NULL,
+        previous_value TEXT,
+        new_value TEXT
+      );
+    `);
+    const server = makeServer();
+    raw
+      .prepare(
+        `INSERT INTO servers (id, name, transport_json, tags_json, created_at, health_check_interval_ms)
+         VALUES (@id, @name, @transport_json, @tags_json, @created_at, @health_check_interval_ms)`
+      )
+      .run({
+        id: server.id,
+        name: server.name,
+        transport_json: JSON.stringify(server.transport),
+        tags_json: JSON.stringify(server.tags),
+        created_at: server.createdAt,
+        health_check_interval_ms: server.healthCheckIntervalMs
+      });
+    const preExistingEventId = randomUUID();
+    raw
+      .prepare(
+        `INSERT INTO drift_events (id, server_id, tool_name, detected_at, kind, severity, description, previous_value, new_value)
+         VALUES (@id, @server_id, @tool_name, @detected_at, @kind, @severity, @description, @previous_value, @new_value)`
+      )
+      .run({
+        id: preExistingEventId,
+        server_id: server.id,
+        tool_name: "search",
+        detected_at: Date.now(),
+        kind: "schema",
+        severity: "high",
+        description: "pre-migration event",
+        previous_value: "a",
+        new_value: "b"
+      });
+    raw.pragma("user_version = 1");
+    raw.close();
+
+    // Opening a SqliteStore on that same file should migrate it forward.
+    const migrated = new SqliteStore({ path: dbPath });
+
+    // The pre-existing row survived, with metric correctly undefined
+    // (not the string "null" or an error) since it predates the column.
+    const events = migrated.listDriftEvents({ serverId: server.id });
+    expect(events).toHaveLength(1);
+    expect(events[0]?.id).toBe(preExistingEventId);
+    expect(events[0]?.metric).toBeUndefined();
+
+    // And the newly-added column actually works for new writes.
+    migrated.recordDriftEvent({
+      id: randomUUID(),
+      serverId: server.id,
+      toolName: "search",
+      detectedAt: Date.now(),
+      kind: "statistical",
+      metric: "latency",
+      severity: "medium",
+      description: "post-migration event"
+    });
+    const afterWrite = migrated.listDriftEvents({ serverId: server.id });
+    expect(afterWrite).toHaveLength(2);
+    expect(afterWrite.find((e) => e.metric === "latency")).toBeDefined();
+    migrated.close();
+
+    // Confirm the migration was actually persisted to disk (not just
+    // reflected in-memory for this one SqliteStore instance) by opening a
+    // completely fresh raw connection to the same file.
+    const verify = new Database(dbPath, { readonly: true });
+    expect(verify.pragma("user_version", { simple: true })).toBe(2);
+    const columns = verify.pragma("table_info(drift_events)") as Array<{ name: string }>;
+    expect(columns.some((c) => c.name === "metric")).toBe(true);
+    verify.close();
   });
 });

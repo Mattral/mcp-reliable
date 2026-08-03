@@ -48,6 +48,7 @@ type DriftEventRow = {
   tool_name: string;
   detected_at: number;
   kind: string;
+  metric: string | null;
   severity: string;
   description: string;
   previous_value: string | null;
@@ -111,6 +112,7 @@ function driftEventFromRow(row: DriftEventRow): DriftEvent {
     toolName: row.tool_name,
     detectedAt: row.detected_at,
     kind: row.kind as DriftEvent["kind"],
+    metric: (row.metric ?? undefined) as DriftEvent["metric"],
     severity: row.severity as DriftEvent["severity"],
     description: row.description,
     previousValue: row.previous_value ?? undefined,
@@ -156,8 +158,14 @@ export class SqliteStore implements ReliabilityStore {
     if (currentVersion === 0) {
       this.db.exec(SCHEMA_SQL);
       this.db.pragma(`user_version = ${SCHEMA_VERSION}`);
+      return;
     }
-    // Future schema changes: `if (currentVersion < 2) { ...ALTER TABLE...; }` etc.
+    if (currentVersion < 2) {
+      // v1 -> v2: see docs/decisions/0015-statistical-drift-detection.md.
+      this.db.exec(`ALTER TABLE drift_events ADD COLUMN metric TEXT;`);
+    }
+    // Future schema changes: `if (currentVersion < 3) { ...ALTER TABLE...; }` etc.
+    this.db.pragma(`user_version = ${SCHEMA_VERSION}`);
   }
 
   upsertServer(server: Server): void {
@@ -281,8 +289,8 @@ export class SqliteStore implements ReliabilityStore {
   recordDriftEvent(event: DriftEvent): void {
     this.db
       .prepare(
-        `INSERT INTO drift_events (id, server_id, tool_name, detected_at, kind, severity, description, previous_value, new_value)
-         VALUES (@id, @server_id, @tool_name, @detected_at, @kind, @severity, @description, @previous_value, @new_value)`
+        `INSERT INTO drift_events (id, server_id, tool_name, detected_at, kind, metric, severity, description, previous_value, new_value)
+         VALUES (@id, @server_id, @tool_name, @detected_at, @kind, @metric, @severity, @description, @previous_value, @new_value)`
       )
       .run({
         id: event.id,
@@ -290,6 +298,7 @@ export class SqliteStore implements ReliabilityStore {
         tool_name: event.toolName,
         detected_at: event.detectedAt,
         kind: event.kind,
+        metric: event.metric ?? null,
         severity: event.severity,
         description: event.description,
         previous_value: event.previousValue ?? null,
