@@ -28,7 +28,7 @@ not a manual step.
 
 ## What's covered
 
-As of this writing: **200 tests, 0 failing**, across every package.
+As of this writing: **225 tests, 0 failing**, across every package.
 
 | Package | What's tested |
 |---|---|

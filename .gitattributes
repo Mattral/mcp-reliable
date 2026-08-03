@@ -1,0 +1,17 @@
+# Force LF for all text files regardless of the checking-out machine's OS
+# or local `core.autocrlf` setting. Without this, a Windows checkout with
+# `core.autocrlf=true` (Git for Windows' own recommended default) silently
+# converts every file to CRLF on checkout — which then looks like every
+# file in the repo has "changed" the moment anything (an editor save, an
+# externally-applied patch/zip, a `git add --renormalize .`) writes LF
+# back, even though the actual code content never moved. This repo's
+# history and CI are LF throughout; this file makes that the enforced,
+# machine-independent default instead of relying on every contributor's
+# local git config agreeing by coincidence.
+* text=auto eol=lf
+
+# Windows batch files and any future .cmd/.bat scripts genuinely need
+# CRLF to run correctly under cmd.exe — carve out an explicit exception
+# rather than let text=auto guess.
+*.cmd text eol=crlf
+*.bat text eol=crlf

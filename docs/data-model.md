@@ -170,7 +170,7 @@ scorer.
 
 ## Drift detection
 
-Two independent detectors, both pure functions in
+Three independent detectors, all pure functions in
 `packages/core/src/drift.ts`:
 
 ### Schema drift
@@ -205,11 +205,69 @@ signature in a more recent window, and only reports drift if:
 Severity scales with how dominant the new shape is: `high` at ≥90% of
 recent calls, `medium` at ≥75%, `low` otherwise.
 
-**What this deliberately does not do yet:** statistical comparison of
-output *values* or latency *distributions* (e.g. a change-point test, a KS
-test) — the spec calls this out explicitly as a P1 feature
-("Behavioral drift detection: Statistical comparison of tool outputs over
-time"). The P0 output-shape detector catches "a field was renamed/removed/
-retyped" reliably; it will not catch "the numbers coming back are
-statistically different but the same shape" — that's the P1 upgrade. See
-[`decisions/0007-drift-detection-v0-scope.md`](./decisions/0007-drift-detection-v0-scope.md).
+**What `computeOutputSignature` is actually called on matters.** A raw MCP
+`tools/call` result's `content` array is `[{ type: "text", text: "..." }]`
+for the extremely common case of a tool returning JSON-serialized
+structured data as a text block — that outer shape never changes even when
+the *real* payload embedded in `text` does, so hashing `result.content`
+directly is close to useless. `@mattral/collector`'s
+`extractOutputPayload` (in `packages/collector/src/output-payload.ts`)
+unwraps this before signing: it prefers `structuredContent` when a tool
+declares an output schema, otherwise parses a single JSON text block into
+its real shape, and only falls back to hashing the content array itself
+for genuinely unstructured or multi-block results. This was a real,
+previously-shipped bug — see
+[`decisions/0015-statistical-drift-detection.md`](./decisions/0015-statistical-drift-detection.md)
+for how it was found.
+
+### Statistical drift (the P1 upgrade — currently latency only)
+
+`detectLatencyDrift` compares the *distribution* of successful calls'
+`durationMs` between an earlier baseline window and a more recent one,
+using a two-sample Kolmogorov-Smirnov test (`kolmogorovSmirnovTest` in
+`packages/core/src/stats.ts`) — chosen over a t-test because latency
+distributions are typically right-skewed, not normal. It reports drift
+(`kind: "statistical"`, `metric: "latency"`) only when:
+
+- both windows have at least `minSampleSize` (default 20 — notably higher
+  than output-shape drift's 5, since a KS test needs more data to have
+  real power) successful executions,
+- the KS test is significant at `alpha` (default 0.01, deliberately
+  stricter than the conventional 0.05 — this check runs repeatedly as
+  traffic accumulates, not once), **and**
+- the shift in median latency is at least `minRelativeShift` (default
+  0.2, i.e. 20%) — statistical significance alone isn't sufficient
+  justification for an alert once sample sizes get large; a tiny,
+  operationally meaningless shift can still be "significant."
+
+This catches what the P0 output-shape detector and `computeHealthScore`'s
+fixed p95 threshold both miss: a tool that's gotten durably slower (or
+faster) but hasn't crossed a fixed threshold, or where the *shape* of the
+latency distribution changed (e.g. a new bimodal pattern) without moving
+the mean much. See
+[`decisions/0015-statistical-drift-detection.md`](./decisions/0015-statistical-drift-detection.md)
+for the KS-test approximation's verification methodology.
+
+**What this still deliberately does not do:** statistical comparison of
+output *values* (e.g. "the numbers in this field used to average 40, now
+average 400") — the other half of the P1 spec item ("Behavioral drift
+detection: Statistical comparison of tool outputs over time"). Unlike
+latency, this would require storing actual numeric values extracted from
+tool outputs — a real data-retention decision nothing in this project has
+made before (today literally nothing about output *content* is
+persisted, only shape/size) — so it's deliberately scoped out rather than
+silently bundled in. See
+[`decisions/0007-drift-detection-v0-scope.md`](./decisions/0007-drift-detection-v0-scope.md)
+and [`decisions/0015-statistical-drift-detection.md`](./decisions/0015-statistical-drift-detection.md).
+
+### Where these actually run
+
+Schema drift is checked from both `mcp-reliable monitor`'s health checks
+(`tools/list` only) and `mcp-reliable proxy`'s live traffic (also
+`tools/list`, whenever the proxied client asks for it) — it's an O(1)
+fingerprint compare, cheap enough to run on every observation.
+Output-shape and statistical drift need whole *windows* of executions
+with real tool outputs, which only the proxy's live `tools/call` traffic
+produces; `StdioProxyCollector` checks both every `driftCheckIntervalCalls`
+calls (default 10) per tool, throttled so a window-comparison query and a
+KS test don't run on literally every single call.

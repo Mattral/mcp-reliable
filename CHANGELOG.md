@@ -2,7 +2,48 @@
 
 ## Unreleased
 
-Post-1.0 hardening pass — see
+### Statistical drift detection
+
+See
+[`decisions/0015-statistical-drift-detection.md`](./docs/decisions/0015-statistical-drift-detection.md)
+for the full account, including two pre-existing bugs found and fixed
+along the way.
+
+**Added**
+
+- `detectLatencyDrift`: a new `"statistical"` drift kind (`metric:
+  "latency"`) comparing successful calls' latency *distributions* between
+  a baseline and recent window via a two-sample Kolmogorov-Smirnov test —
+  catches durable latency shifts that stay under `computeHealthScore`'s
+  fixed p95 threshold. KS-test p-value approximation verified against
+  `scipy.stats.ks_2samp` across 2,000 randomized trials before shipping.
+- `drift_events` gained a `metric` column (this project's first real
+  schema migration, `SCHEMA_VERSION` 1 → 2, tested against a real
+  pre-migration database file).
+- `StdioProxyCollector` gained `driftCheckIntervalCalls` and
+  `driftWindowSize` options controlling how often and over how large a
+  window output-shape/statistical drift get checked.
+- `examples/reference-mcp-server` gained `MCP_RELIABLE_ARTIFICIAL_DELAY_MS`
+  for reproducing a controlled latency shift in tests/demos.
+
+**Fixed**
+
+- `detectOutputShapeDrift` was fully built and unit-tested but never
+  actually wired into any running code path — the roadmap's "tested
+  against a real server" claim described manual testing, not anything
+  the shipped code or automated suite exercised. Now wired into
+  `StdioProxyCollector` alongside the new latency detector.
+- Output signatures were computed over MCP's transport-level `content`
+  wrapper instead of the tool's actual output — `[{type:"text",
+  text:"..."}]` has the same shape regardless of what JSON is embedded in
+  `text`, so output-shape drift could never have caught a real change.
+  Fixed via a new `extractOutputPayload` helper
+  (`packages/collector/src/output-payload.ts`) that unwraps
+  `structuredContent` or parses a single JSON text block before signing.
+
+### Post-1.0 hardening pass
+
+See
 [`decisions/0014-post-1.0-hardening-pass.md`](./docs/decisions/0014-post-1.0-hardening-pass.md)
 for the full account of each item below.
 

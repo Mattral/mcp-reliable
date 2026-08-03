@@ -27,7 +27,7 @@ Legend: ✅ done and tested · 🚧 partially done · ⬜ not started
 |---|---|---|
 | Health monitoring | ✅ | `HealthChecker` (pull-based, never calls a tool) + `monitor` command. |
 | Per-tool metrics (success rate, p50/p95, error rate) | ✅ | `computeHealthScore`; per-tool breakdown exists in report data but the CLI `report` command currently prints server-level, not per-tool, numbers — see "Near-term" below. |
-| Basic drift detection (schema + output signature) | ✅ | `detectSchemaDrift` + `detectOutputShapeDrift`, both tested against a real server across two sessions. |
+| Basic drift detection (schema + output signature) | ✅ | `detectSchemaDrift` + `detectOutputShapeDrift`. Correction: at v1.0.0, `detectOutputShapeDrift` was fully built and unit-tested but never actually wired into any running code path, and the output-signature computation it depends on was hashing MCP's transport envelope instead of the real tool output — both fixed in `decisions/0015-statistical-drift-detection.md`. Now genuinely verified end-to-end against a real server. |
 | Clean CLI (`monitor`, `report`, `add-server`) | ✅ | Plus `init`, `servers`, `remove-server`, `proxy` (needed to actually generate real traffic data — see `architecture.md#collection-model`). |
 | Local-first storage (SQLite, zero config) | ✅ | `SqliteStore`, `.mcp-reliable/data.sqlite` convention. |
 | stdio + SSE support | 🚧 | `HealthChecker` supports stdio/SSE/HTTP for pull-based checks. The traffic-observing proxy (`StdioProxyCollector`) supports **stdio only** — an SSE/HTTP proxy is a materially different problem (there's no "child process" to sit in front of) and isn't built yet. |
@@ -37,7 +37,7 @@ Legend: ✅ done and tested · 🚧 partially done · ⬜ not started
 
 | Feature | Status | Notes |
 |---|---|---|
-| Behavioral drift detection (statistical comparison) | ⬜ | P0 shipped a structural (shape-only) detector; true statistical comparison of output *values* or latency *distributions* is not built — see `decisions/0007-drift-detection-v0-scope.md`. |
+| Behavioral drift detection (statistical comparison) | 🚧 | Latency *distribution* drift shipped — a two-sample KS test comparing baseline/recent windows, see `decisions/0015-statistical-drift-detection.md`. Statistical comparison of output *values* is still not built — deliberately deferred, since it needs a data-retention decision (extracting and storing real numeric values from tool outputs) this project hasn't made, not just an engineering pass. |
 | Token usage tracking | ⬜ | `Execution.inputBytes`/`outputBytes` are byte-size proxies, explicitly not token counts (see `data-model.md#execution`) — real token tracking needs a tokenizer matched to the calling agent's model, which mcp-reliable has no way to know today. |
 | Error classification | ⬜ | `Execution.errorMessage` is stored verbatim; there's no grouping/clustering of common failure modes yet. |
 | Multi-server fleet view | ✅ | The dashboard's fleet overview (`/`) lists every registered server with live status; `servers`/`monitor`/`report` also already operate over every registered server. |
@@ -70,6 +70,16 @@ engine, OpenTelemetry exporter, ML-based anomaly detection, team features
    does not intervene in traffic. If this is wanted later, it would need
    to be a deliberate, clearly-scoped opt-in given the safety implications
    of software autonomously disabling tools an agent might depend on.
+4. **Should mcp-reliable store actual output *values* for statistical
+   comparison, not just shape/size?** Deliberately not decided yet.
+   Latency-distribution drift (the other half of the P1 "statistical
+   comparison" spec item) shipped without this, since latency needs no new
+   stored data. Output-value drift would — extracting and persisting real
+   numeric values from tool outputs, which nothing in this system does
+   today, and which has real privacy surface (see
+   `decisions/0015-statistical-drift-detection.md`). Needs a scoping
+   conversation (which fields, what depth, what retention) before it's
+   worth writing code against.
 
 ## Known limitations to fix soon (not spec gaps, just rough edges)
 
@@ -102,9 +112,16 @@ engine, OpenTelemetry exporter, ML-based anomaly detection, team features
   and the REST API doesn't create or deliver alerts at all (it only reads
   what the CLI has recorded). See `decisions/0010-alerting-notifier-design.md`.
 - Health-degradation and drift thresholds (`DEFAULT_HEALTH_DEGRADATION_THRESHOLDS`,
-  the output-shape drift dominance/sample-size defaults) are code-level
+  the output-shape drift dominance/sample-size defaults, and the new
+  latency-drift `minSampleSize`/`alpha`/`minRelativeShift`) are code-level
   constants, not configurable per server yet — same gap the P2 "custom
   rule engine" item is meant to eventually close.
+- Output-shape and statistical (latency) drift need a full
+  `driftWindowSize * 2` (default 40) successful calls to a given tool
+  before the *first* check is even attempted — low-traffic tools may go a
+  while before either detector has enough data to say anything. Schema
+  drift has no such floor (it's a single fingerprint compare). See
+  `decisions/0015-statistical-drift-detection.md`.
 - The `cli` and `server` packages each independently resolve the DB path
   convention (small, deliberate duplication — see
   `decisions/0006-server-config-duplication.md`), which is worth revisiting

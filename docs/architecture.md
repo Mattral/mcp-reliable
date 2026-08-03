@@ -163,8 +163,13 @@ by the CLI, not by `core` or `storage` directly:
   per schema-drift event the health check just found; no "resolved" state,
   since drift is a point-in-time fact, not an ongoing condition).
 - `mcp-reliable proxy` also creates drift alerts, from *live* traffic
-  drift (its `onDrift` callback) — a schema change caught mid-production,
-  not just at the next scheduled check.
+  drift (its `onDrift` callback) — schema, output-shape, and statistical
+  (latency) drift, all caught mid-production as real traffic accumulates,
+  not just at the next scheduled check. Output-shape and statistical
+  drift are only ever detected here, from real `tools/call` traffic — the
+  health-check path (`mcp-reliable monitor`) only ever calls `tools/list`,
+  which has no tool *output* to compare (see
+  [`decisions/0015-statistical-drift-detection.md`](./decisions/0015-statistical-drift-detection.md)).
 
 Delivery is a separate concern, `@mattral/notifier`: a `Notifier`
 interface with `WebhookNotifier` (generic JSON) and `SlackNotifier`
