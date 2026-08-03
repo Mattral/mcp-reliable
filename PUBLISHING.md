@@ -36,7 +36,7 @@ npm run release:check
 ```
 
 This runs lint, a full typecheck, a full build, and the entire test suite
-(should be 200 tests passing). Don't publish anything if this doesn't
+(should be 225 tests passing). Don't publish anything if this doesn't
 pass clean.
 
 ## 2. Build the dashboard before publishing the server package
