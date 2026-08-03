@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import {
   computeOutputSignature,
   computeSchemaFingerprint,
+  detectLatencyDrift,
+  detectOutputShapeDrift,
   detectSchemaDrift,
   type DriftEvent,
   type Execution,
@@ -10,6 +12,7 @@ import {
 } from "@mattral/core";
 import type { ReliabilityStore } from "@mattral/storage";
 import { JsonRpcFramer, type JsonRpcMessage } from "./json-rpc-framer.js";
+import { extractOutputPayload } from "./output-payload.js";
 
 export interface StdioProxyCollectorOptions {
   serverId: string;
@@ -26,6 +29,24 @@ export interface StdioProxyCollectorOptions {
   input?: NodeJS.ReadableStream;
   /** Stream carrying traffic TO the real client (defaults to this process's stdout). */
   output?: NodeJS.WritableStream;
+  /**
+   * How many executions of the *same tool* to accumulate between
+   * window-based drift checks (output-shape and statistical/latency).
+   * Unlike schema drift (an O(1) fingerprint compare, checked on every
+   * `tools/list`), these compare whole windows of stored executions —
+   * running that on literally every single call would mean a store query
+   * plus a KS test per call on hot paths. Default 10: frequent enough that
+   * drift is caught within a handful of seconds of typical traffic, cheap
+   * enough not to matter. See docs/decisions/0015-statistical-drift-detection.md.
+   */
+  driftCheckIntervalCalls?: number;
+  /**
+   * Size of each of the two (baseline, recent) windows compared for
+   * window-based drift. Default 20, matching `detectLatencyDrift`'s own
+   * default `minSampleSize` — there's no point fetching a bigger window
+   * than the detector needs.
+   */
+  driftWindowSize?: number;
 }
 
 interface PendingCall {
@@ -63,12 +84,17 @@ function isToolsListResult(value: unknown): value is ToolsListResult {
  */
 export class StdioProxyCollector {
   private readonly options: StdioProxyCollectorOptions;
+  private readonly driftCheckIntervalCalls: number;
+  private readonly driftWindowSize: number;
   private child: ChildProcess | undefined;
   private readonly pendingCalls = new Map<string | number, PendingCall>();
   private readonly pendingListRequests = new Set<string | number>();
+  private readonly callCountByTool = new Map<string, number>();
 
   constructor(options: StdioProxyCollectorOptions) {
     this.options = options;
+    this.driftCheckIntervalCalls = options.driftCheckIntervalCalls ?? 10;
+    this.driftWindowSize = options.driftWindowSize ?? 20;
   }
 
   /**
@@ -157,14 +183,13 @@ export class StdioProxyCollector {
   }
 
   private recordCallExecution(pending: PendingCall, message: JsonRpcMessage): void {
-    const durationMs = Date.now() - pending.startedAt;
+    const now = Date.now();
+    const durationMs = now - pending.startedAt;
     const isError = Boolean(message.error) || Boolean(message.result?.isError);
     const outputBytes =
       message.result !== undefined ? Buffer.byteLength(JSON.stringify(message.result), "utf8") : undefined;
     const outputSignature =
-      !isError && message.result !== undefined
-        ? computeOutputSignature(message.result.content ?? message.result)
-        : undefined;
+      !isError && message.result !== undefined ? computeOutputSignature(extractOutputPayload(message.result)) : undefined;
 
     const execution: Execution = {
       id: randomUUID(),
@@ -182,6 +207,58 @@ export class StdioProxyCollector {
 
     this.options.store.recordExecution(execution);
     this.options.onExecution?.(execution);
+    this.maybeCheckWindowDrift(pending.toolName, now);
+  }
+
+  private recordDrift(drift: DriftEvent): void {
+    this.options.store.recordDriftEvent(drift);
+    this.options.onDrift?.(drift);
+  }
+
+  /**
+   * Every `driftCheckIntervalCalls` calls to a given tool, pulls its last
+   * two `driftWindowSize`-execution windows and runs the window-based
+   * drift detectors (output-shape, latency) against them. Schema drift is
+   * handled separately in `recordToolsListResult` — it's a per-fingerprint
+   * compare, not a window comparison, so it runs on every `tools/list`
+   * instead of being throttled here.
+   */
+  private maybeCheckWindowDrift(toolName: string, now: number): void {
+    const count = (this.callCountByTool.get(toolName) ?? 0) + 1;
+    this.callCountByTool.set(toolName, count);
+    if (count % this.driftCheckIntervalCalls !== 0) return;
+
+    const windowSize = this.driftWindowSize;
+    // Most-recent-first (see SqliteStore#listExecutions): the first half is
+    // the "recent" window, the second half the "baseline" it's compared
+    // against.
+    const executions = this.options.store.listExecutions({
+      serverId: this.options.serverId,
+      toolName,
+      limit: windowSize * 2
+    });
+    if (executions.length < windowSize * 2) return;
+
+    const recent = executions.slice(0, windowSize);
+    const baseline = executions.slice(windowSize, windowSize * 2);
+
+    const shapeDrift = detectOutputShapeDrift({
+      serverId: this.options.serverId,
+      toolName,
+      baseline,
+      recent,
+      now
+    });
+    if (shapeDrift) this.recordDrift(shapeDrift);
+
+    const latencyDrift = detectLatencyDrift({
+      serverId: this.options.serverId,
+      toolName,
+      baseline,
+      recent,
+      now
+    });
+    if (latencyDrift) this.recordDrift(latencyDrift);
   }
 
   private recordToolsListResult(result: ToolsListResult): void {
@@ -200,8 +277,7 @@ export class StdioProxyCollector {
         now
       });
       if (drift) {
-        this.options.store.recordDriftEvent(drift);
-        this.options.onDrift?.(drift);
+        this.recordDrift(drift);
       }
 
       const toolRecord: Tool = {
