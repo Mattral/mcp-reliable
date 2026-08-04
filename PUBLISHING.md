@@ -36,7 +36,7 @@ npm run release:check
 ```
 
 This runs lint, a full typecheck, a full build, and the entire test suite
-(should be 225 tests passing). Don't publish anything if this doesn't
+(should be 256 tests passing). Don't publish anything if this doesn't
 pass clean.
 
 ## 2. Build the dashboard before publishing the server package
@@ -103,31 +103,33 @@ npm view @mattral/core version
 npm view @mattral/server version
 ```
 
-Each should print `1.0.0`. Then, in a scratch directory *outside* this
-repo (important — this is the real test of whether a standalone install
-actually works, not just the monorepo dev setup):
+Each should print the version you just published (`1.1.0` as of this
+writing — check `package.json` at the repo root if it's been a while).
+Then, in a scratch directory *outside* this repo (important — this is the
+real test of whether a standalone install actually works, not just the
+monorepo dev setup):
 
 ```bash
-# macOS / Linux
+# macOS / Linux — replace <version> with the version you just published
 mkdir -p /tmp/mcp-reliable-smoke && cd /tmp/mcp-reliable-smoke
-npx mcp-reliable@1.0.0 --version
-npx mcp-reliable@1.0.0 init
+npx mcp-reliable@<version> --version
+npx mcp-reliable@<version> init
 ```
 
 ```powershell
-# Windows PowerShell
+# Windows PowerShell — replace <version> with the version you just published
 New-Item -ItemType Directory -Force "$env:TEMP\mcp-reliable-smoke" | Out-Null
 Set-Location "$env:TEMP\mcp-reliable-smoke"
-npx mcp-reliable@1.0.0 --version
-npx mcp-reliable@1.0.0 init
+npx mcp-reliable@<version> --version
+npx mcp-reliable@<version> init
 ```
 
 ```cmd
-:: Windows cmd.exe
+:: Windows cmd.exe — replace <version> with the version you just published
 mkdir "%TEMP%\mcp-reliable-smoke" 2>nul
 cd /d "%TEMP%\mcp-reliable-smoke"
-npx mcp-reliable@1.0.0 --version
-npx mcp-reliable@1.0.0 init
+npx mcp-reliable@<version> --version
+npx mcp-reliable@<version> init
 ```
 
 Since this project is actually run and published from Windows day to day
@@ -138,8 +140,8 @@ from a Linux/macOS machine instead.
 ## 5. Tag and push
 
 ```
-git tag -a v1.0.0 -m "v1.0.0"
-git push origin v1.0.0
+git tag -a v<version> -m "v<version>"
+git push origin v<version>
 ```
 
 **Verify the tag actually points where you think it does before trusting
@@ -148,17 +150,17 @@ reports `"tag already exists"`, a tag was created earlier than you
 expect, possibly before some later doc/rename commits. Check:
 
 ```
-git log v1.0.0 --oneline -1     # what the tag currently points to
-git log HEAD --oneline -1       # what you actually want it to point to
+git log v<version> --oneline -1     # what the tag currently points to
+git log HEAD --oneline -1           # what you actually want it to point to
 ```
 
 If those differ, the tag is stale. Fix it by deleting and recreating at
 the current `HEAD`, then force-pushing:
 
 ```
-git tag -d v1.0.0
-git tag -a v1.0.0 -m "v1.0.0" HEAD
-git push origin v1.0.0 --force
+git tag -d v<version>
+git tag -a v<version> -m "v<version>" HEAD
+git push origin v<version> --force
 ```
 
 (This exact scenario happened during the real `v1.0.0` release: the tag
@@ -169,16 +171,18 @@ confirmation of the fix.)
 
 ## 6. GitHub release
 
-`RELEASE_NOTES_v1.0.0.md` (repo root) is ready to use as the release body
-as-is. Either:
+`RELEASE_NOTES_v<version>.md` (repo root — create one per release,
+following the existing ones' structure) is ready to use as the release
+body as-is. Either:
 
 ```
-gh release create v1.0.0 --title "v1.0.0" --notes-file RELEASE_NOTES_v1.0.0.md
+gh release create v<version> --title "v<version>" --notes-file RELEASE_NOTES_v<version>.md
 ```
 
 or, without the GitHub CLI: GitHub → your repo → **Releases** → **Draft a
-new release** → tag `v1.0.0` → title `v1.0.0` → paste the contents of
-`RELEASE_NOTES_v1.0.0.md` into the description → **Publish release**.
+new release** → tag `v<version>` → title `v<version>` → paste the
+contents of `RELEASE_NOTES_v<version>.md` into the description →
+**Publish release**.
 
 ## 7. After release
 
