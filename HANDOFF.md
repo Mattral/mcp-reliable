@@ -105,7 +105,7 @@ and driving it like an actual user would:
 package, a new CLI command, or anything that gets spawned/installed/run
 as a real standalone artifact, verify it in that exact shape before
 calling it done — not just via the fast unit-test suite. The fast suite
-(225 tests, described in §6) is genuinely valuable and should stay
+(256 tests, described in §6) is genuinely valuable and should stay
 fast and mock-free where it can, but it is not a substitute for "did I
 actually run this the way a real user would."
 
@@ -352,7 +352,7 @@ interpret itself.
 
 ## 6. Testing — the exact current numbers and what they mean
 
-**225 tests, 27 test files, 0 mocking the MCP protocol itself.** Full CI
+**256 tests, 29 test files, 0 mocking the MCP protocol itself.** Full CI
 on Node 20.x and 22.x via GitHub Actions
 (`.github/workflows/ci.yml`) — lint, typecheck, build, `vitest run
 --coverage`.
@@ -429,7 +429,7 @@ change throughout its history; don't stop.
 - Partial: stdio + SSE support — `HealthChecker` supports stdio/SSE/HTTP
   for pull-based checks; the traffic-observing proxy is **stdio only**.
 
-**P1 — Production Readiness: 5 / 7** (counting latency drift detection as
+**P1 — Production Readiness: 6 / 7** (counting latency drift detection as
 done and its output-value half as a separate, still-deferred piece — see
 below).
 - Done: multi-server fleet view (the dashboard); webhook + Slack alerting
@@ -438,13 +438,14 @@ below).
   mcp`); historical trends (`HealthScore` snapshots feeding the
   dashboard's history chart); statistical drift detection for latency
   distributions (`detectLatencyDrift`, see
-  `docs/decisions/0015-statistical-drift-detection.md`).
+  `docs/decisions/0015-statistical-drift-detection.md`); error
+  classification (`classifyError`, see
+  `docs/decisions/0016-error-classification.md`).
 - Not started: statistical drift detection for output *values*
   (deliberately deferred — needs a data-retention decision, not just
   engineering time, see the ADR above); token usage tracking (blocked on
   a real product decision — which tokenizer, matching which model? — not
-  just engineering time); error classification (grouping/clustering
-  `Execution.errorMessage`).
+  just engineering time).
 
 **P2 — Advanced Capabilities: 0 / 5.** Cost optimization engine, custom
 rule engine, OpenTelemetry exporter, ML-based anomaly detection, team
@@ -509,7 +510,11 @@ published `@mattral/server` install, dashboard bundling included.
    pass. Would add a third `DriftEvent.kind` (e.g. `"statistical"`)
    alongside the existing structural detectors, per ADR 0007's own
    guidance — additive, not a replacement.
-5. **Error classification** (P1). Smallest of the remaining P1 items —
+5. **~~Error classification~~ ✅ Done, plus a real bug fixed along the way.**
+   See [`docs/decisions/0016-error-classification.md`](./docs/decisions/0016-error-classification.md) —
+   proxy-observed tool-level failures' real error text was being silently
+   discarded for a generic placeholder before this pass; that's fixed too.
+   Original scoping note: Smallest of the remaining P1 items —
    grouping/clustering `Execution.errorMessage` into common failure modes.
 6. **Token usage tracking** (P1). Needs a product conversation before
    code — real token counts need a tokenizer matched to whatever model
@@ -567,7 +572,7 @@ published `@mattral/server` install, dashboard bundling included.
    assuming it's a mistake to fix.
 5. Run `npm install && npm run build && npm test` before changing
    anything, to confirm your own environment matches what's expected
-   (225 tests passing is the baseline as of the last update to this file
+   (256 tests passing is the baseline as of the last update to this file
    — see `docs/roadmap.md` if that number looks stale, since it's the
    actual current source of truth per §7).
 6. Whatever you build next — apply §3's verification standard: run it for
