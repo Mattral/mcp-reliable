@@ -87,7 +87,7 @@ git clone https://github.com/Mattral/mcp-reliable.git
 cd mcp-reliable
 npm install
 npm run build
-npm test   # 225 tests, none of them mocked at the protocol level — see docs/testing.md
+npm test   # 256 tests, none of them mocked at the protocol level — see docs/testing.md
 ```
 
 ```bash
