@@ -28,7 +28,7 @@ not a manual step.
 
 ## What's covered
 
-As of this writing: **225 tests, 0 failing**, across every package.
+As of this writing: **256 tests, 0 failing**, across every package.
 
 | Package | What's tested |
 |---|---|
@@ -114,36 +114,28 @@ this section was last verified against a real `npm audit` run, not
 reasoned about from memory. Do your own `npm audit` before relying on
 this if it's been a while.
 
-As of the most recent check, four advisories show up. None require an
-urgent dependency bump; each was traced individually rather than assumed
-safe by category:
+As of the 1.1.0 release, `npm audit fix` (no `--force`, non-breaking)
+was applied and resolved seven findings that had appeared since 1.0.0
+(`@hono/node-server`, `brace-expansion`, `fast-uri`, `hono`, `ip-address`,
+`postcss`, and one further `@hono/node-server` path) — full rebuild and
+test suite reconfirmed clean afterward.
 
-- **`esbuild`** (moderate, via `vite`/`vitest`'s dev server) — a known
-  CORS issue letting any website send requests to esbuild's dev server
-  and read the response. Affects `vitest`'s local dev/watch tooling only;
-  not a runtime dependency of `core`, `storage`, `collector`, `cli`, or
-  `server`, and ships in none of their `dist/` output. Upgrading `vitest`
-  to a major version with a patched `esbuild` is reasonable future
-  maintenance, not urgent.
-- **`brace-expansion`** (high, DoS via unbounded expansion) — only
-  reachable through `eslint`'s and `@vitest/coverage-v8`'s own
-  `minimatch`/`glob` dependencies. Dev-tooling only; never in any
-  published package.
-- **`@hono/node-server`** (moderate, Windows path-traversal in
-  `serve-static` via an encoded backslash, `<2.0.5`) — traced with `npm
-  ls @hono/node-server`: the vulnerable `1.19.15` copy is nested
-  exclusively under `@modelcontextprotocol/sdk`, which bundles its own
-  optional HTTP-transport helper. `@mattral/agent-interface` never uses
-  it — it only ever constructs `StdioServerTransport` (see
-  `packages/agent-interface/src/server.ts`), so that code path is never
-  reached. `@mattral/server`'s own direct dependency resolves to
-  `2.0.11`, already past the patched `2.0.5` floor.
-- **`react-router`** (high, `GHSA-qwww-vcr4-c8h2`, RSC-mode CSRF bypass,
-  `>=7.12.0 <8.3.0`) — the advisory is explicit that it only affects
-  applications using React Router's *unstable RSC APIs*.
-  `@mattral/dashboard` is a plain client-side Vite SPA using standard
-  hash-based `BrowserRouter`-style routing (see
+Two findings remain, both traced individually rather than assumed safe by
+category, same as before:
+
+- **`esbuild`/`vite`/`vitest`/`@vitest/coverage-v8`** (moderate through
+  critical severity, several advisories including a Vitest UI-server file
+  read) — all reachable only through `vitest`'s own dev/watch/UI tooling,
+  none of which this project's scripts enable (`vitest run`, not `vitest
+  --ui`). Not a runtime dependency of `core`, `storage`, `collector`,
+  `cli`, or `server`, and ships in none of their `dist/` output. Fixing
+  requires `npm audit fix --force` (a major `vitest` bump); not applied,
+  since nothing here is reachable in this project's actual usage.
+- **`react-router`** (high, `GHSA-qwww-vcr4-c8h2`, RSC-mode CSRF bypass)
+  — the advisory is explicit that it only affects applications using
+  React Router's *unstable RSC APIs*. `@mattral/dashboard` is a plain
+  client-side Vite SPA using standard hash-based routing (see
   `decisions/0008-dashboard-stack-and-duplication.md`) — no RSC, no
-  server actions, nothing the advisory's exploit path requires. A future
-  react-router v8 migration is optional hygiene, not a security fix, and
-  isn't worth the breaking-change risk to force right now.
+  server actions, nothing the advisory's exploit path requires. Not
+  forced for the same reason as before: real breaking-change risk against
+  a finding that isn't reachable in how this dashboard is actually built.
