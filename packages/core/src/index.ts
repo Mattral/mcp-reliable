@@ -6,3 +6,4 @@ export * from "./drift.js";
 export * from "./alerts.js";
 export * from "./redact.js";
 export * from "./recommendations.js";
+export * from "./error-classification.js";

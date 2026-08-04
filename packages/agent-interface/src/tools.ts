@@ -38,7 +38,7 @@ export function registerAgentTools(server: McpServer, store: ReliabilityStore): 
     "get_server_health",
     {
       description:
-        "Get the current reachability and tool health score for one server. Reachability reflects the most recent health check; healthScore (0-100, null if no traffic yet) reflects real tool calls observed via `mcp-reliable proxy` over the trailing window.",
+        "Get the current reachability and tool health score for one server. Reachability reflects the most recent health check; healthScore (0-100, null if no traffic yet) reflects real tool calls observed via `mcp-reliable proxy` over the trailing window. Also includes errorSummary: a classified breakdown of recent failures (e.g. rate-limit, auth, timeout) by likely cause, sorted by frequency, to help decide whether an issue is worth working around before falling back to another tool.",
       inputSchema: {
         serverId: z.string().describe("A server id from list_servers"),
         windowMs: z.number().int().positive().optional().describe("Trailing window in milliseconds (default 1h)")
