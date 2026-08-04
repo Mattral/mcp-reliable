@@ -53,7 +53,7 @@ One observed tool invocation.
 | `startedAt` | epoch ms | |
 | `durationMs` | number | |
 | `success` | boolean | `false` if the JSON-RPC response had a top-level `error`, or `result.isError === true`. |
-| `errorMessage` | string? | |
+| `errorMessage` | string? | For proxy-observed tool-level failures, extracted from the actual error text in `result.content`, not just a generic placeholder — see "Error classification" below. |
 | `outputSignature` | string? | Structural signature of the output (see "Output-shape drift" below). Only set for successful, proxy-observed calls. |
 | `inputBytes` / `outputBytes` | number? | Best-effort size proxies. **Not token counts** — computing real token counts needs a tokenizer matched to whatever model the calling agent uses, which `mcp-reliable` has no way to know; see `roadmap.md` for token-usage tracking as a still-open P1 item. |
 | `source` | `"proxy" \| "health-check"` | See [`architecture.md#collection-model`](./architecture.md#collection-model). |
@@ -271,3 +271,36 @@ with real tool outputs, which only the proxy's live `tools/call` traffic
 produces; `StdioProxyCollector` checks both every `driftCheckIntervalCalls`
 calls (default 10) per tool, throttled so a window-comparison query and a
 KS test don't run on literally every single call.
+
+## Error classification
+
+`classifyError(errorMessage)` (`packages/core/src/error-classification.ts`)
+sorts a raw error message string into one of a fixed set of common failure
+modes — `rate-limit`, `auth`, `not-found`, `timeout`, `validation`,
+`connection`, `server-error`, or `unknown` — via ordered regex pattern
+matching, first match wins. This is deliberately simple pattern matching,
+not a learned classifier: error messages come from arbitrary third-party
+MCP servers with no shared format, so a fixed, auditable taxonomy that's
+easy to extend by adding a pattern is a better fit than something that'd
+need labeled training data this project has no source for. See
+[`decisions/0016-error-classification.md`](./decisions/0016-error-classification.md)
+for the known trade-offs of that approach (occasional misclassification
+from an unrelated number matching a status-code-shaped pattern, novel
+phrasings falling to `unknown`) — accepted for a heuristic whose job is
+triaging what's worth investigating first, not certifying a diagnosis.
+
+`summarizeErrorCategories(executions)` groups a set of executions'
+failures by category, sorted by count descending, each with a real
+example message. This depends on `errorMessage` actually containing the
+tool's real error text — for proxy-observed tool-level failures (`result:
+{isError: true, content: [...]}`), that required a fix of its own:
+`@mattral/collector`'s `extractErrorMessage`
+(`packages/collector/src/error-message.ts`) now reads the actual text out
+of `content` instead of discarding it for a generic placeholder, the same
+underlying mistake `extractOutputPayload` fixed for output-shape drift
+(see `decisions/0016-error-classification.md` for how this was found).
+
+Surfaced today via `mcp-reliable report` (an "Errors, by likely cause"
+section) and the agent interface's `get_server_health` tool
+(`errorSummary`). Not yet surfaced in the dashboard — a deliberate scope
+boundary for this pass, not an oversight; see the ADR.
