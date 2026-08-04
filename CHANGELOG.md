@@ -1,6 +1,48 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — Statistical drift detection, error classification, and post-1.0 hardening
+
+Every published package's `README.md` was also added this release — none
+had one before, so none showed anything on their npm package page.
+
+### Dependencies
+
+`npm audit fix` (non-breaking) applied, resolving seven findings that had
+appeared since 1.0.0 (`@hono/node-server`, `brace-expansion`, `fast-uri`,
+`hono`, `ip-address`, `postcss`). Two findings remain, both unreachable in
+this project's actual usage — see `docs/testing.md#dependency-audit-status`.
+
+### Error classification
+
+See
+[`decisions/0016-error-classification.md`](./docs/decisions/0016-error-classification.md)
+for the full account, including a third instance of the same bug pattern
+found in the statistical drift detection pass.
+
+**Added**
+
+- `classifyError` / `summarizeErrorCategories`: a fixed taxonomy
+  (rate-limit, auth, not-found, timeout, validation, connection,
+  server-error, unknown) for grouping `Execution` failures by likely
+  cause, via ordered regex pattern matching.
+- `mcp-reliable report` gained an "Errors, by likely cause" section.
+- The agent interface's `get_server_health` tool gained `errorSummary` —
+  an agent can now see *why* a server is degraded, not just its score.
+
+**Fixed**
+
+- Proxy-observed tool-level failures (`result: {isError: true, content:
+  [...]}`) had their real error text discarded in favor of one generic
+  placeholder string, regardless of what the tool actually said —
+  verified live (15 calls to a tool that fails ~25% of the time produced
+  3 failures, all three recorded identically). Fixed via a new
+  `extractErrorMessage` helper
+  (`packages/collector/src/error-message.ts`).
+
+**Deliberately not done this pass:** a dashboard visualization for the
+error breakdown, and folding error-category context into
+`buildRecommendation` — both flagged as clean, well-scoped follow-ups
+rather than rushed in. See the ADR.
 
 ### Statistical drift detection
 
