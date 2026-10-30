@@ -1,11 +1,5 @@
 # Contributing
 
-**Picking this project up with AI assistance (Claude or otherwise)?**
-Read [`HANDOFF.md`](./HANDOFF.md) first — it's written specifically for a
-new session with no memory of how this project was actually built, and
-covers the project's philosophy, architecture, and exact current status
-in more depth than this file does.
-
 ## Setup
 
 ```bash

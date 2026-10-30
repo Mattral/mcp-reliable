@@ -13,3 +13,6 @@ coverage/
 *.sqlite-wal
 *.sqlite-shm
 .mcp-reliable/
+
+# Local working notes (kept out of the repository)
+HANDOFF.md
