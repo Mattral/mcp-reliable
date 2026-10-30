@@ -1,6 +1,6 @@
 {
   "name": "@mattral/notifier",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Webhook and Slack delivery for mcp-reliable alerts",
   "type": "module",
   "license": "MIT",

@@ -1,5 +1,49 @@
 # Changelog
 
+## 1.2.0 — Dependency security fixes, v1 scope closure
+
+A maintenance release. No new features; `mcp-reliable` is now
+feature-complete for v1 and in maintenance mode — see
+[`decisions/0017-v1-scope-closure.md`](./docs/decisions/0017-v1-scope-closure.md).
+
+### Dependencies
+
+`npm audit` went from 20 findings (4 critical, 9 high) to **0**, across
+runtime and dev dependencies. See `docs/testing.md#dependency-audit-status`
+for each change and why.
+
+- `@modelcontextprotocol/sdk` minimum raised to `^1.32.2`.
+- `zod` `^3.24.1` → `^4.6.7` (`GHSA-mrhx-c7xc-m3w5` has no 3.x fix).
+- `vitest` / `@vitest/coverage-v8` `^2.1.8` → `^4.1.12` (dev only; 4.x
+  keeps Node 20 support).
+- `package-lock.json` regenerated.
+
+**Compatibility note:** `@mattral/core` exports its data-model schemas
+(`ServerSchema`, `TransportConfigSchema`, and the rest of `types.ts`),
+which are now zod 4 schemas. Their inferred TypeScript types and
+`.parse()` behavior are unchanged, and nothing else in this repository
+needed a source change. If you embed them inside your own zod 3 schemas,
+move to zod 4 as well. This is why the release is 1.2.0 rather than a
+patch.
+
+### Fixed
+
+- The `v1.0.0` git tag now points at the commit actually published to npm
+  as 1.0.0. It had been on a separate line of history with no common
+  ancestor with `main` — see the "Resolution" section of ADR 0014.
+- `README.md` no longer lists statistical drift detection as unbuilt
+  (latency drift shipped in 1.1.0), and points at every release's notes
+  rather than only 1.0.0's.
+- Roadmap, `SECURITY.md`, `docs/architecture.md`, and `docs/testing.md`
+  updated to the current dependency-audit and tag status.
+
+### Documentation
+
+- ADR 0017: v1 scope closure — what's out of scope, why, and what would
+  reopen it. `docs/roadmap.md` marks those items accordingly.
+- `PUBLISHING.md` step 5 adds a `git merge-base --is-ancestor` check, the
+  one that would have caught the `v1.0.0` tag problem.
+
 ## 1.1.0 — Statistical drift detection, error classification, and post-1.0 hardening
 
 Every published package's `README.md` was also added this release — none

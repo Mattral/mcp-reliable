@@ -1,6 +1,6 @@
 {
   "name": "@mattral/server",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "REST API exposing mcp-reliable's stored reliability data, and serves the web dashboard",
   "type": "module",
   "license": "MIT",

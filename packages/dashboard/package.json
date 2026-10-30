@@ -1,6 +1,6 @@
 {
   "name": "@mattral/dashboard",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Web dashboard for mcp-reliable: fleet overview and per-server detail, served as static assets by @mattral/server",
   "type": "module",
