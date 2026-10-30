@@ -107,8 +107,6 @@ for the full account of each item below.
   publish, and adds tag-verification guidance to the tag/push step.
 - `README.md` now links directly to the live npm packages and carries
   the same "verified live" framing `RELEASE_NOTES_v1.0.0.md` already had.
-- `HANDOFF.md` now lives in the repo root instead of being a separate,
-  out-of-repo document handed to each new assistant session.
 
 **Investigated, documented, not code-changed**
 

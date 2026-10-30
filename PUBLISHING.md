@@ -132,8 +132,8 @@ npx mcp-reliable@<version> --version
 npx mcp-reliable@<version> init
 ```
 
-Since this project is actually run and published from Windows day to day
-(see the caution in `HANDOFF.md`), prefer the PowerShell/cmd form when
+Since this project is actually run and published from Windows day to day,
+prefer the PowerShell/cmd form when
 verifying a real release — the Unix form is here for anyone publishing
 from a Linux/macOS machine instead.
 

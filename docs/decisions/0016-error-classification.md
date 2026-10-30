@@ -6,12 +6,11 @@ Accepted.
 
 ## Context
 
-`HANDOFF.md`'s remaining-work list described this as the smallest
+The project's remaining-work list described this as the smallest
 remaining P1 item: "grouping/clustering `Execution.errorMessage` into
 common failure modes." No detailed spec existed beyond that one line —
 the original `mcp-reliable-project-spec.md` this project was built from
-isn't preserved anywhere in the repo, just referenced narratively in
-`HANDOFF.md`. The design below is this pass's own scoping, not a
+isn't preserved anywhere in the repo. The design below is this pass's own scoping, not a
 pre-existing spec being implemented.
 
 ## Finding: tool-level error text was already being discarded
