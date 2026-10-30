@@ -1,6 +1,6 @@
 {
   "name": "@mattral/collector",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Health checking and traffic-observing proxy collectors for MCP servers",
   "type": "module",
   "license": "MIT",
@@ -45,8 +45,8 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@mattral/core": "^1.2.1",
-    "@mattral/storage": "^1.2.1",
+    "@mattral/core": "^1.2.2",
+    "@mattral/storage": "^1.2.2",
     "@modelcontextprotocol/sdk": "^1.32.2"
   },
   "devDependencies": {

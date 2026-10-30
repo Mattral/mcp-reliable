@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { ReliabilityStore } from "@mattral/storage";
 import { registerAgentTools } from "./tools.js";
+import { VERSION } from "./version.js";
 
 export interface CreateAgentServerOptions {
   name?: string;
@@ -12,7 +13,7 @@ export interface CreateAgentServerOptions {
 export function createAgentServer(store: ReliabilityStore, options: CreateAgentServerOptions = {}): McpServer {
   const server = new McpServer({
     name: options.name ?? "mcp-reliable",
-    version: options.version ?? "1.0.0"
+    version: options.version ?? VERSION
   });
   registerAgentTools(server, store);
   return server;

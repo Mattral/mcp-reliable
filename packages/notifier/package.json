@@ -1,6 +1,6 @@
 {
   "name": "@mattral/notifier",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Webhook and Slack delivery for mcp-reliable alerts",
   "type": "module",
   "license": "MIT",
@@ -44,7 +44,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@mattral/core": "^1.2.1"
+    "@mattral/core": "^1.2.2"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",

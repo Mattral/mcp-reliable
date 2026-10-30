@@ -1,6 +1,6 @@
 {
   "name": "mcp-reliable",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Runtime observability and reliability CLI for the Model Context Protocol ecosystem: health checks, a traffic-observing proxy, drift detection, webhook/Slack alerting, and an agent-facing MCP interface",
   "type": "module",
   "license": "MIT",
@@ -43,11 +43,11 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@mattral/agent-interface": "^1.2.1",
-    "@mattral/collector": "^1.2.1",
-    "@mattral/core": "^1.2.1",
-    "@mattral/notifier": "^1.2.1",
-    "@mattral/storage": "^1.2.1",
+    "@mattral/agent-interface": "^1.2.2",
+    "@mattral/collector": "^1.2.2",
+    "@mattral/core": "^1.2.2",
+    "@mattral/notifier": "^1.2.2",
+    "@mattral/storage": "^1.2.2",
     "chalk": "^5.6.2",
     "cli-table3": "^0.6.5",
     "commander": "^15.0.0",

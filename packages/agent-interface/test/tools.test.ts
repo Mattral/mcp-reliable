@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { Server } from "@mattral/core";
 import { SqliteStore } from "@mattral/storage";
 import { createAgentServer } from "../src/server.js";
+
+const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
 
 function makeServer(overrides: Partial<Server> = {}): Server {
   return {
@@ -44,6 +47,12 @@ describe("agent-interface tools (via a real MCP Client, InMemoryTransport)", () 
 
   afterEach(() => {
     store.close();
+  });
+
+  it("reports this package's own version to clients", async () => {
+    const client = await connectedClient(store);
+    expect(client.getServerVersion()).toEqual({ name: "mcp-reliable", version: packageJson.version });
+    await client.close();
   });
 
   it("exposes exactly the expected tool names", async () => {

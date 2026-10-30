@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.2 — Report the real version
+
+### Fixed
+
+- `mcp-reliable --version` printed `1.0.0` in every release since 1.0.0.
+  It now reads the CLI package's own `package.json`.
+- The agent interface reported version `1.0.0` to MCP clients, and the
+  health checker sent `1.0.0` as its client version to monitored servers.
+  Both now report their package's real version.
+
+### Changed
+
+- Internal `@mattral/*` dependency ranges raised to `^1.2.2`.
+- `PUBLISHING.md`: releases are published only from the WSL checkout, and
+  the smoke test checks the `--version` output.
+
 ## 1.2.1 — Packaging fix for the 1.2.0 publish
 
 No code changes from 1.2.0; install this one instead. See

@@ -1,6 +1,6 @@
 {
   "name": "@mattral/agent-interface",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Agent-facing MCP interface exposing mcp-reliable's own health, drift, and recommendation data as MCP tools",
   "type": "module",
   "license": "MIT",
@@ -44,8 +44,8 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@mattral/core": "^1.2.1",
-    "@mattral/storage": "^1.2.1",
+    "@mattral/core": "^1.2.2",
+    "@mattral/storage": "^1.2.2",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "zod": "^4.6.7"
   },

@@ -10,6 +10,7 @@ import {
 } from "@mattral/core";
 import type { ReliabilityStore } from "@mattral/storage";
 import { createClientTransport } from "./transport-factory.js";
+import { VERSION } from "./version.js";
 
 export interface HealthCheckResult {
   serverId: string;
@@ -50,7 +51,7 @@ export class HealthChecker {
 
   constructor(options: HealthCheckerOptions) {
     this.store = options.store;
-    this.clientInfo = options.clientInfo ?? { name: "mcp-reliable", version: "1.0.0" };
+    this.clientInfo = options.clientInfo ?? { name: "mcp-reliable", version: VERSION };
     this.timeoutMs = options.timeoutMs ?? 10_000;
   }
 

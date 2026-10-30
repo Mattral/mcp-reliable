@@ -1,6 +1,6 @@
 {
   "name": "@mattral/storage",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "SQLite-backed persistence layer for mcp-reliable",
   "type": "module",
   "license": "MIT",
@@ -44,7 +44,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@mattral/core": "^1.2.1",
+    "@mattral/core": "^1.2.2",
     "better-sqlite3": "^11.8.1"
   },
   "devDependencies": {

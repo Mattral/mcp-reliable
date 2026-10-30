@@ -1,6 +1,6 @@
 {
   "name": "@mattral/server",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "REST API exposing mcp-reliable's stored reliability data, and serves the web dashboard",
   "type": "module",
   "license": "MIT",
@@ -51,8 +51,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.0.8",
-    "@mattral/core": "^1.2.1",
-    "@mattral/storage": "^1.2.1",
+    "@mattral/core": "^1.2.2",
+    "@mattral/storage": "^1.2.2",
     "hono": "^4.12.30"
   },
   "devDependencies": {

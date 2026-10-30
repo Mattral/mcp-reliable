@@ -26,6 +26,16 @@ for the full account.
 Just run `npm login` if you haven't already, and confirm with `npm whoami`
 that it shows `mattral`.
 
+### Where to publish from
+
+Publish only from the WSL checkout (`~/mcp-reliable`), using WSL's own
+Node in `~/.local/node`, not the Windows one. Since 1.2.1 there is no
+Windows clone; the 1.2.0 publish went wrong in a stale, uninstalled one.
+npm's browser sign-in prompts open in Windows because `~/.bashrc` sets
+`BROWSER=/mnt/c/Windows/explorer.exe`. Without it, pressing Enter at an
+"Authenticate your account" prompt fails with "Set the BROWSER
+environment variable".
+
 ## 1. Pre-flight check
 
 From the repo root, starting with a clean install, even in a checkout
@@ -37,7 +47,7 @@ npm run release:check
 ```
 
 This runs lint, a full typecheck, a full build, and the entire test suite
-(should be 256 tests passing). Don't publish anything if this doesn't
+(should be 259 tests passing). Don't publish anything if this doesn't
 pass clean.
 
 **Why `npm ci` comes first:** this was skipped for the 1.2.0 release.
@@ -125,7 +135,7 @@ npm view @mattral/core version
 npm view @mattral/server version
 ```
 
-Each should print the version you just published (`1.2.1` as of this
+Each should print the version you just published (`1.2.2` as of this
 writing — check `package.json` at the repo root if it's been a while).
 Then, in a scratch directory *outside* this repo (important — this is the
 real test of whether a standalone install actually works, not just the
@@ -154,10 +164,13 @@ npx mcp-reliable@<version> --version
 npx mcp-reliable@<version> init
 ```
 
-Since this project is actually run and published from Windows day to day,
-prefer the PowerShell/cmd form when
-verifying a real release — the Unix form is here for anyone publishing
-from a Linux/macOS machine instead.
+Releases are published from the WSL checkout (see "Where to publish
+from" above), so the Linux form is the one in regular use. The
+PowerShell/cmd forms are kept for checking that a release also installs
+on Windows.
+
+`--version` must print the version you just published. Before 1.2.2 it
+always printed `1.0.0`.
 
 ## 5. Tag and push
 

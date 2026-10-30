@@ -7,13 +7,14 @@ import { runMonitor } from "./commands/monitor.js";
 import { runReport } from "./commands/report.js";
 import { runProxy } from "./commands/proxy.js";
 import { runMcp } from "./commands/mcp.js";
+import { VERSION } from "./version.js";
 
 const program = new Command();
 
 program
   .name("mcp-reliable")
   .description("Runtime observability and reliability platform for the Model Context Protocol ecosystem")
-  .version("1.0.0");
+  .version(VERSION);
 
 program
   .command("init")
