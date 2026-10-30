@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Container image at `ghcr.io/mattral/mcp-reliable`, built from the
+  released npm packages by `.github/workflows/container.yml` for every
+  GitHub release (1.2.2 onward). It runs the REST API and dashboard by
+  default, and any CLI command when given one. See `deploy/Dockerfile`
+  and the README's Docker section. No package code changed.
+
 ## 1.2.2 — Report the real version
 
 ### Fixed

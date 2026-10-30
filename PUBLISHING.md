@@ -227,6 +227,14 @@ new release** → tag `v<version>` → title `v<version>` → paste the
 contents of `RELEASE_NOTES_v<version>.md` into the description →
 **Publish release**.
 
+Publishing the release also builds the container image: the `Container`
+workflow (`.github/workflows/container.yml`) installs that version from
+npm, smoke-tests it, and pushes `ghcr.io/mattral/mcp-reliable:<version>`
+and `:latest`. It waits for npm to serve the new tarballs, so it's fine to
+create the release right after `npm publish`. Check it went green under
+**Actions → Container**. To rebuild an image for an existing version, use
+**Run workflow** there with that version.
+
 ## 7. After release
 
 - `docs/roadmap.md` already reflects what's in this release; no changes

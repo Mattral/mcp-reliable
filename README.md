@@ -83,6 +83,25 @@ detection, alerting, the dashboard, and the agent-facing MCP interface),
 using the bundled `examples/reference-mcp-server` so there's nothing
 external to stand up first.
 
+### Docker
+
+Each release is also published as a container image with the CLI, the
+REST API, and the dashboard. By default it serves the API and dashboard
+on port 4317, keeping its SQLite database in the `/data` volume:
+
+```bash
+docker run -p 4317:4317 -v mcp-reliable-data:/data ghcr.io/mattral/mcp-reliable
+```
+
+Pass a command to run the CLI against the same data instead:
+
+```bash
+docker run --rm -v mcp-reliable-data:/data ghcr.io/mattral/mcp-reliable mcp-reliable report
+```
+
+The image installs the released npm packages; see
+[`deploy/Dockerfile`](./deploy/Dockerfile).
+
 ### Building from source (for contributing, or trying pre-release changes)
 
 Requires Node.js 20+.
