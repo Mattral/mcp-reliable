@@ -55,6 +55,10 @@ either hiding them or building them speculatively.
 - Documentation is kept true to the code. A doc claim that's discovered to
   be wrong is a bug.
 - No new features without a concrete use case behind them.
+- Packaging isn't feature work. A container image of the released npm
+  packages (`ghcr.io/mattral/mcp-reliable`, added after 1.2.2) changes
+  no package code; it gives people a way to run the existing dashboard
+  and CLI without installing Node.
 
 **What would reopen scope:** an issue describing a real deployment that
 needs it. If one item comes back first, it's most likely group 2 — remote

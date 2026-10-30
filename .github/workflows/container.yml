@@ -1,0 +1,191 @@
+name: Container
+
+# Build the mcp-reliable image from the released npm packages, smoke-test it,
+# and push it to GitHub Container Registry:
+#
+#   ghcr.io/mattral/mcp-reliable:<version>   and   ghcr.io/mattral/mcp-reliable:latest
+#
+# - A published GitHub release (tag v<version>) builds and pushes that version;
+#   a prerelease is not tagged :latest.
+# - Actions -> Container -> Run workflow builds and pushes any released version.
+# - A pull request that changes the Dockerfile or this workflow builds and
+#   smoke-tests the newest version already on npm (a version-bump PR's own
+#   version is not released yet), and never pushes.
+#
+# The image's org.opencontainers.image.source label links the package to this
+# repository. Only GITHUB_TOKEN is used (no PAT, no stored secret). Every action
+# is pinned to a commit SHA.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Released mcp-reliable version on npm to package, for example 1.2.2"
+        required: true
+        type: string
+      latest:
+        description: "Also tag the image :latest"
+        required: false
+        type: boolean
+        default: true
+  pull_request:
+    paths:
+      - deploy/Dockerfile
+      - .github/workflows/container.yml
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: container-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/mattral/mcp-reliable
+
+jobs:
+  image:
+    name: build, smoke-test, push
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Resolve the version and tags
+        id: v
+        env:
+          EVENT: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_LATEST: ${{ inputs.latest }}
+        run: |
+          case "$EVENT" in
+            release)
+              version="${RELEASE_TAG#v}"
+              latest=$([ "$PRERELEASE" = "true" ] && echo false || echo true)
+              push=true ;;
+            workflow_dispatch)
+              version="${INPUT_VERSION#v}"
+              latest="$INPUT_LATEST"
+              push=true ;;
+            *)
+              # Test the Dockerfile and workflow against the newest release on npm;
+              # the PR's own package.json version may not be published yet.
+              version=$(npm view mcp-reliable version)
+              latest=false
+              push=false ;;
+          esac
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version '$version' is not X.Y.Z"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "push=$push" >> "$GITHUB_OUTPUT"
+          echo "version $version, :latest $latest, push $push"
+
+      # A release is created after `npm publish`, but npm can take a few
+      # minutes to serve a new version's tarball (see PUBLISHING.md).
+      - name: Wait until npm serves mcp-reliable@${{ steps.v.outputs.version }}
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          urls="https://registry.npmjs.org/mcp-reliable/-/mcp-reliable-${VERSION}.tgz
+          https://registry.npmjs.org/@mattral/server/-/server-${VERSION}.tgz"
+          for attempt in $(seq 1 30); do
+            missing=0
+            for url in $urls; do
+              curl --silent --fail --head --output /dev/null "$url" || missing=1
+            done
+            if [ "$missing" = 0 ]; then
+              echo "mcp-reliable and @mattral/server ${VERSION} are on npm"
+              exit 0
+            fi
+            echo "not on npm yet (attempt ${attempt}/30)"
+            sleep 20
+          done
+          echo "::error::mcp-reliable@${VERSION} or @mattral/server@${VERSION} is not on npm; publish it first (PUBLISHING.md)."
+          exit 1
+
+      - name: Build
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          docker build \
+            --file deploy/Dockerfile \
+            --build-arg MCP_RELIABLE_VERSION="${VERSION}" \
+            --tag "${IMAGE}:${VERSION}" \
+            deploy/
+
+      - name: Report the image size and labels
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          bytes=$(docker image inspect --format '{{.Size}}' "${IMAGE}:${VERSION}")
+          echo "Image ${IMAGE}:${VERSION}: ${bytes} bytes uncompressed"
+          {
+            echo "### ${IMAGE}:${VERSION}"
+            echo ""
+            echo "Uncompressed size: ${bytes} bytes"
+            echo ""
+            echo '```'
+            docker history --format '{{.Size}}\t{{.CreatedBy}}' "${IMAGE}:${VERSION}" | cut -c1-160
+            echo '```'
+            echo ""
+            echo '```'
+            docker image inspect --format '{{json .Config.Labels}}' "${IMAGE}:${VERSION}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          docker image inspect --format '{{json .Config.Labels}}' "${IMAGE}:${VERSION}"
+
+      - name: Smoke test (fails the job before any push)
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          set -euo pipefail
+          # 1. The CLI reports the version, as a non-root user.
+          [ "$(docker run --rm "${IMAGE}:${VERSION}" mcp-reliable --version)" = "${VERSION}" ]
+          [ "$(docker run --rm "${IMAGE}:${VERSION}" id -u)" != "0" ]
+          # 2. The CLI writes its database to the /data volume.
+          docker volume create smoke-data
+          docker run --rm -v smoke-data:/data "${IMAGE}:${VERSION}" mcp-reliable init
+          docker run --rm -v smoke-data:/data "${IMAGE}:${VERSION}" test -s /data/data.sqlite
+          # 3. The default command serves the API and dashboard from that volume.
+          docker run --detach --name smoke --publish 4317:4317 -v smoke-data:/data "${IMAGE}:${VERSION}"
+          ok=false
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:4317/api/health > /tmp/health.json; then ok=true; break; fi
+            if [ "$(docker inspect --format '{{.State.Running}}' smoke)" != "true" ]; then break; fi
+            sleep 2
+          done
+          if [ "$ok" != "true" ]; then
+            echo "::error::the server did not become healthy"
+            docker logs smoke
+            exit 1
+          fi
+          cat /tmp/health.json; echo
+          [ "$(curl --silent --fail http://127.0.0.1:4317/api/servers)" = '{"servers":[]}' ]
+          curl --silent --fail http://127.0.0.1:4317/ | grep --quiet '<div id="root">'
+          docker logs smoke
+          docker rm --force smoke
+          docker volume rm smoke-data
+          echo "smoke test passed"
+
+      - name: Push to ghcr.io
+        if: steps.v.outputs.push == 'true'
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+          LATEST: ${{ steps.v.outputs.latest }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          echo "${GH_TOKEN}" | docker login ghcr.io --username "${ACTOR}" --password-stdin
+          docker push "${IMAGE}:${VERSION}"
+          if [ "${LATEST}" = "true" ]; then
+            docker tag "${IMAGE}:${VERSION}" "${IMAGE}:latest"
+            docker push "${IMAGE}:latest"
+          fi
+          docker logout ghcr.io
