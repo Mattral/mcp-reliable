@@ -36,8 +36,9 @@ planned. This README is the fast path to running it.
   tools, detect schema changes. Never calls a tool (see
   [why](./docs/architecture.md#collection-model)).
 - **A traffic-observing proxy** — wrap a real `stdio` MCP server with one
-  command-line change and get real per-call latency, success/failure, and
-  output-shape drift detection, with zero changes to the server itself.
+  command-line change and get real per-call latency, success/failure,
+  output-shape and latency-distribution drift detection, and failures
+  grouped by likely cause — with zero changes to the server itself.
 - **A CLI** (`mcp-reliable`) — `init`, `add-server`, `remove-server`,
   `servers`, `monitor`, `report`, `proxy`. See
   [`docs/cli-reference.md`](./docs/cli-reference.md).
@@ -58,10 +59,14 @@ planned. This README is the fast path to running it.
   [`docs/decisions/0011-agent-interface-design.md`](./docs/decisions/0011-agent-interface-design.md).
 - **SQLite storage**, zero config, one file per project.
 
-Not yet built: SSE/HTTP support in the traffic-observing proxy (and the
-agent interface, which is also stdio-only for now), statistical drift
-detection, token tracking, and the rest of P2 in
-[`docs/roadmap.md`](./docs/roadmap.md).
+**Status: feature-complete for v1, in maintenance mode.** Dependency
+advisories and bug reports are handled; new features are not planned
+without a concrete use case behind them. Deliberately out of scope for v1:
+SSE/HTTP support in the traffic-observing proxy and the agent interface
+(both stdio-only), output-*value* drift, token tracking, and the P2
+"advanced capabilities" — see
+[`docs/decisions/0017-v1-scope-closure.md`](./docs/decisions/0017-v1-scope-closure.md)
+for why, and [`docs/roadmap.md`](./docs/roadmap.md) for the full list.
 
 ## Quick start
 
@@ -128,9 +133,9 @@ development.
 ## Releasing
 
 See [`PUBLISHING.md`](./PUBLISHING.md) for the mechanical checklist
-(npm publish order, tagging, GitHub release) and
-[`RELEASE_NOTES_v1.0.0.md`](./RELEASE_NOTES_v1.0.0.md) for what shipped in
-the current release.
+(npm publish order, tagging, GitHub release), [`CHANGELOG.md`](./CHANGELOG.md)
+for every release, and the `RELEASE_NOTES_v*.md` files for each release's
+summary.
 
 ## License
 

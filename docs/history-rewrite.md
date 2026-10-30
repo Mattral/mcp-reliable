@@ -35,6 +35,10 @@ Citations in tracked files were updated to the new SHAs (ADR 0014).
 | `v1.0.0` | `bc0fb7dc88f532ace10e5bfd942ffc01edbad3be` | `9285d7b930bd6fe86629bb887236f0b3ed555330` |
 | `v1.1.0` | `bd869178b6e7ada4a89a357c8aba773047632cd3` | `246470702ada4308d96123aab84135eab32b81e7` |
 
+After the rewrite, `v1.0.0` was moved to `ddd208b24e8037d9b971df313b09351eb00e9709`
+— the commit npm recorded as 1.0.0's `gitHead` — fixing the stale tag
+documented in ADR 0014.
+
 ## If you have an old clone
 
 Old clones cannot be pulled or merged into the rewritten history. Delete

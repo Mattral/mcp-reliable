@@ -32,9 +32,9 @@ for the full list. Summary:
 
 ## Dependencies
 
-`npm audit` currently flags a dev-only `esbuild`/`vitest` advisory (a CORS
-issue in esbuild's development server). It affects local test tooling
-only — it is not a dependency of any published package's runtime code. See
+As of the 1.2.0 release, `npm audit` reports no known vulnerabilities in
+any dependency, runtime or dev. Dependency advisories are handled in
+maintenance releases — see
 [`docs/testing.md#dependency-audit-status`](./docs/testing.md#dependency-audit-status)
-for details, and re-run `npm audit` yourself before relying on this
-assessment, since advisories change over time.
+for how the last round was resolved, and re-run `npm audit` yourself
+before relying on this, since advisories change over time.

@@ -2,8 +2,7 @@
 
 This is the mechanical checklist for actually shipping a release: `npm
 publish` for every package, a tagged GitHub release, and release notes.
-None of these steps can be run by Claude on your behalf — they need your
-own npm login and your own GitHub write access. Everything here has been
+Every step needs the maintainer's own npm login and GitHub write access. Everything here has been
 prepared and verified up to the point where your credentials take over
 (see [`docs/decisions/0012-v1-release-preparation.md`](./docs/decisions/0012-v1-release-preparation.md)
 for what "verified" means for each piece).
@@ -152,7 +151,12 @@ expect, possibly before some later doc/rename commits. Check:
 ```
 git log v<version> --oneline -1     # what the tag currently points to
 git log HEAD --oneline -1           # what you actually want it to point to
+git merge-base --is-ancestor v<version> HEAD && echo "tag is on this branch"
 ```
+
+The last check matters: a tag can carry the right files and commit
+message while sitting on a different line of history entirely (this is
+what actually happened to `v1.0.0`).
 
 If those differ, the tag is stale. Fix it by deleting and recreating at
 the current `HEAD`, then force-pushing:
@@ -166,8 +170,8 @@ git push origin v<version> --force
 (This exact scenario happened during the real `v1.0.0` release: the tag
 was created before the `@mcp-reliable` → `@mattral` scope rename
 finished, leaving it pointing at a commit whose `package.json` files
-don't match what's actually on npm. See ADR 0014 for the full account and
-confirmation of the fix.)
+don't match what's actually on npm. The tag was corrected on 2026-10-30;
+see ADR 0014 for the full account.)
 
 ## 6. GitHub release
 

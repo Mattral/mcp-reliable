@@ -86,19 +86,17 @@ package on its own."
 
 ### What "publish" and "release" actually mean here
 
-Neither is something this assistant can execute on the user's behalf —
-`npm publish` needs the user's own authenticated npm login (and, for the
-`@mcp-reliable` scope specifically, either a free npm organization named
-`mcp-reliable` or renaming the scope to an npm username the user already
-controls — checked during this pass: none of the intended package names
-were already taken on the registry, but scope ownership is a one-time
-setup step only the user can complete), and a GitHub release needs the
-user's own repository write access. See `PUBLISHING.md` for the exact,
-verified sequence — dependency-order publish commands, the tag/release
-steps, and the one-time scope setup decision — prepared here but run by
-the user themselves, the same division of responsibility this project has
-used for `git push` throughout (every commit was prepared and validated
-here; every push happened on the user's machine).
+Both need the maintainer's own credentials — `npm publish` needs an
+authenticated npm login (and, for the `@mcp-reliable` scope specifically,
+either a free npm organization named `mcp-reliable` or renaming the scope
+to an npm username the maintainer already controls — checked during this
+pass: none of the intended package names were already taken on the
+registry, but scope ownership is a one-time setup step only the
+maintainer can complete), and a GitHub release needs repository write
+access. See `PUBLISHING.md` for the exact, verified sequence —
+dependency-order publish commands, the tag/release steps, and the
+one-time scope setup decision — prepared and validated ahead of time, then
+run by the maintainer from their own machine.
 
 ## Consequences
 

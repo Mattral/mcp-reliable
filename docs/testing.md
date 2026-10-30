@@ -114,28 +114,31 @@ this section was last verified against a real `npm audit` run, not
 reasoned about from memory. Do your own `npm audit` before relying on
 this if it's been a while.
 
-As of the 1.1.0 release, `npm audit fix` (no `--force`, non-breaking)
-was applied and resolved seven findings that had appeared since 1.0.0
-(`@hono/node-server`, `brace-expansion`, `fast-uri`, `hono`, `ip-address`,
-`postcss`, and one further `@hono/node-server` path) — full rebuild and
-test suite reconfirmed clean afterward.
+As of 1.2.0, `npm audit` reports **0 vulnerabilities** across every
+dependency, dev tooling included. Getting there took three targeted
+upgrades rather than a blanket `npm audit fix --force`:
 
-Two findings remain, both traced individually rather than assumed safe by
-category, same as before:
+- **`@modelcontextprotocol/sdk` floor raised to `^1.32.2`.** The lockfile
+  had resolved 1.30.0, which had its own high-severity advisory, and its
+  transitive HTTP stack (`express`, `hono`, `body-parser`, `proxy-addr`,
+  `qs`, and others) carried most of the remaining runtime findings.
+- **`zod` 3.x → `^4.6.7`.** `GHSA-mrhx-c7xc-m3w5` (memory exhaustion when
+  validating oversized constrained collections) has no 3.x fix, and
+  `agent-interface` validates agent-supplied tool input with zod — the
+  one place in this project where that input isn't under the operator's
+  control. No source changes were needed; the MCP SDK accepts
+  `^3.25 || ^4.0`. See `CHANGELOG.md` (1.2.0) for the one compatibility
+  note this carries for `@mattral/core`'s exported schemas.
+- **`vitest` / `@vitest/coverage-v8` 2.x → `^4.1.12`** (dev-only). 4.x
+  rather than the newest 5.x because vitest 5 requires Node 22.12+, and
+  this project still supports and CI-tests Node 20.
 
-- **`esbuild`/`vite`/`vitest`/`@vitest/coverage-v8`** (moderate through
-  critical severity, several advisories including a Vitest UI-server file
-  read) — all reachable only through `vitest`'s own dev/watch/UI tooling,
-  none of which this project's scripts enable (`vitest run`, not `vitest
-  --ui`). Not a runtime dependency of `core`, `storage`, `collector`,
-  `cli`, or `server`, and ships in none of their `dist/` output. Fixing
-  requires `npm audit fix --force` (a major `vitest` bump); not applied,
-  since nothing here is reachable in this project's actual usage.
-- **`react-router`** (high, `GHSA-qwww-vcr4-c8h2`, RSC-mode CSRF bypass)
-  — the advisory is explicit that it only affects applications using
-  React Router's *unstable RSC APIs*. `@mattral/dashboard` is a plain
-  client-side Vite SPA using standard hash-based routing (see
-  `decisions/0008-dashboard-stack-and-duplication.md`) — no RSC, no
-  server actions, nothing the advisory's exploit path requires. Not
-  forced for the same reason as before: real breaking-change risk against
-  a finding that isn't reachable in how this dashboard is actually built.
+The 1.1.0-era `react-router` finding (RSC-only, never reachable here) is
+also gone — resolved by the regenerated lockfile.
+
+**Regenerating `package-lock.json`:** use npm 11 (`npx npm@11 install`).
+npm 10's dependency resolver crashes building this tree from scratch
+(`Cannot read properties of null (reading 'edgesOut')`, inside
+`#loadPeerSet`). `npm ci` with npm 10 — what CI runs on Node 20 and
+22 — installs the npm-11-generated lockfile cleanly, so this only affects
+whoever regenerates the lockfile, not anyone installing from it.

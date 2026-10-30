@@ -239,7 +239,6 @@ spawned process, not just the (still valuable, still passing)
   rather than dropped or thrown on, so a single corrupt message can't take
   down a live session — but they are also not parsed for telemetry, so they
   simply don't produce an `Execution` record.
-- No dependency in the runtime path (as opposed to the dev/test toolchain)
-  had a known vulnerability at time of writing — see
-  [`testing.md`](./testing.md#dependency-audit-status) for the one flagged
-  dev-dependency issue and why it doesn't affect shipped code.
+- No dependency, runtime or dev, had a known vulnerability as of the
+  1.2.0 release — see [`testing.md`](./testing.md#dependency-audit-status)
+  for how the last round of advisories was resolved.
