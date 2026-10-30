@@ -31,10 +31,13 @@ that it shows `mattral`.
 Publish only from the WSL checkout (`~/mcp-reliable`), using WSL's own
 Node in `~/.local/node`, not the Windows one. Since 1.2.1 there is no
 Windows clone; the 1.2.0 publish went wrong in a stale, uninstalled one.
-npm's browser sign-in prompts open in Windows because `~/.bashrc` sets
-`BROWSER=/mnt/c/Windows/explorer.exe`. Without it, pressing Enter at an
-"Authenticate your account" prompt fails with "Set the BROWSER
-environment variable".
+npm's browser sign-in prompts open in Windows because `~/.npmrc` sets
+`browser` to `~/.local/bin/open-in-windows`, a two-line wrapper around
+`/mnt/c/Windows/explorer.exe` that always exits 0 (explorer.exe exits 1
+even when it succeeds). Without it, pressing Enter at an "Authenticate
+your account" prompt fails ("Set the BROWSER environment variable", or
+a failed `sensible-browser`). Either way nothing is published, and you
+can also just open the printed URL yourself, since npm keeps waiting.
 
 ## 1. Pre-flight check
 
