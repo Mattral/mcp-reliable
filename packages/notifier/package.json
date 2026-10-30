@@ -1,6 +1,6 @@
 {
   "name": "@mattral/notifier",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Webhook and Slack delivery for mcp-reliable alerts",
   "type": "module",
   "license": "MIT",
@@ -40,10 +40,11 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "clean": "rimraf dist *.tsbuildinfo"
+    "clean": "rimraf dist *.tsbuildinfo",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@mattral/core": "^1.0.0"
+    "@mattral/core": "^1.2.1"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",

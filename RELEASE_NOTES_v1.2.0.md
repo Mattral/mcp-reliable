@@ -1,12 +1,16 @@
 # mcp-reliable v1.2.0
 
+> **Install [1.2.1](./RELEASE_NOTES_v1.2.1.md) instead.** The 1.2.0
+> publish went out without build output and is deprecated on npm. 1.2.1
+> contains exactly the changes described below.
+
 A maintenance release: every known dependency advisory resolved, and v1
 formally declared feature-complete. No new features.
 
 ## Install / upgrade
 
 ```bash
-npm install -g mcp-reliable@1.2.0
+npm install -g mcp-reliable@1.2.1
 ```
 
 Or, if you're already on 1.x: `npm update -g mcp-reliable`.

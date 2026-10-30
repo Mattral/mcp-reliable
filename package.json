@@ -1,7 +1,7 @@
 {
   "name": "mcp-reliable-monorepo",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Runtime observability and reliability platform for the Model Context Protocol ecosystem",
   "type": "module",
   "license": "MIT",
@@ -32,7 +32,7 @@
     "clean": "npm run clean --workspaces --if-present && rimraf coverage",
     "demo": "npm run build && node packages/cli/dist/index.js",
     "release:check": "npm run lint && npm run typecheck && npm run build && npm test",
-    "release:publish": "npm publish --workspace packages/core --workspace packages/storage --workspace packages/collector --workspace packages/notifier --workspace packages/agent-interface --workspace packages/server --workspace packages/cli"
+    "release:publish": "npm run release:check && npm publish --workspace packages/core --workspace packages/storage --workspace packages/collector --workspace packages/notifier --workspace packages/agent-interface --workspace packages/server --workspace packages/cli"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

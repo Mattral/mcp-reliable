@@ -1,6 +1,6 @@
 {
   "name": "@mattral/agent-interface",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Agent-facing MCP interface exposing mcp-reliable's own health, drift, and recommendation data as MCP tools",
   "type": "module",
   "license": "MIT",
@@ -40,11 +40,12 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "clean": "rimraf dist *.tsbuildinfo"
+    "clean": "rimraf dist *.tsbuildinfo",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@mattral/core": "^1.0.0",
-    "@mattral/storage": "^1.0.0",
+    "@mattral/core": "^1.2.1",
+    "@mattral/storage": "^1.2.1",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "zod": "^4.6.7"
   },

@@ -1,6 +1,6 @@
 {
   "name": "@mattral/core",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Shared data model, health scoring, and drift detection algorithms for mcp-reliable",
   "type": "module",
   "license": "MIT",
@@ -41,7 +41,8 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "clean": "rimraf dist *.tsbuildinfo"
+    "clean": "rimraf dist *.tsbuildinfo",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "zod": "^4.6.7"

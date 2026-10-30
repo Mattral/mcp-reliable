@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.2.1 — Packaging fix for the 1.2.0 publish
+
+No code changes from 1.2.0; install this one instead. See
+`RELEASE_NOTES_v1.2.1.md` for the full account.
+
+### Fixed
+
+- 1.2.0 of `@mattral/core`, `storage`, `collector`, `notifier`, and
+  `agent-interface` was published from an unbuilt clone and contains no
+  `dist/` code. Those versions are deprecated on npm, and `latest` was
+  moved back to 1.1.0 until this release. `@mattral/server` and
+  `mcp-reliable` were never published at 1.2.0.
+
+### Changed
+
+- Every published package runs its build in `prepublishOnly`, so a
+  publish without installed dependencies fails instead of shipping an
+  empty tarball. `@mattral/server` builds before copying the dashboard.
+- `npm run release:publish` runs `npm run release:check` first.
+- Internal `@mattral/*` dependency ranges raised from `^1.0.0` to
+  `^1.2.1`.
+- `PUBLISHING.md` starts from `npm ci` and records this incident.
+
 ## 1.2.0 — Dependency security fixes, v1 scope closure
 
 A maintenance release. No new features; `mcp-reliable` is now

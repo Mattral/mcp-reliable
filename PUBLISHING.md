@@ -28,15 +28,27 @@ that it shows `mattral`.
 
 ## 1. Pre-flight check
 
-From the repo root:
+From the repo root, starting with a clean install, even in a checkout
+you think is already set up:
 
 ```
+npm ci
 npm run release:check
 ```
 
 This runs lint, a full typecheck, a full build, and the entire test suite
 (should be 256 tests passing). Don't publish anything if this doesn't
 pass clean.
+
+**Why `npm ci` comes first:** this was skipped for the 1.2.0 release.
+`release:check` failed immediately (`'eslint' is not recognized`), the
+publish ran anyway from a clone with nothing built, and five packages
+went to npm containing only `README.md` and `package.json`. Since 1.2.1,
+every package's `prepublishOnly` runs its build, and `release:publish`
+runs `release:check` itself, so the same mistake now fails instead of
+publishing. See `RELEASE_NOTES_v1.2.1.md` for how it was cleaned up:
+the empty versions can't be unpublished once other packages depend on
+them, so they were deprecated and `latest` was moved back.
 
 ## 2. Build the dashboard before publishing the server package
 
@@ -89,10 +101,21 @@ mcp-reliable` worked correctly despite the warning. Safe to ignore; don't
 "fix" it by changing `bin` field syntax based on the warning alone.
 
 Alternative, once you're comfortable with the above having worked once:
-`npm run release:publish` at the root runs all seven in one command via
-npm's `--workspace` flag (order handled by npm's own workspace dependency
-resolution — the manual sequence above is the one actually verified step
-by step; this is the convenience version for next time).
+`npm run release:publish` at the root runs `release:check`, then all
+seven in one command via npm's `--workspace` flag (in the order listed).
+This is how 1.2.1 was published.
+
+**If a publish goes out broken:** npm never lets you reuse a version
+number, and refuses to unpublish a package that other published
+packages depend on, which applies to every package here except the CLI.
+Instead:
+
+```
+npm dist-tag add @mattral/<pkg>@<last-good-version> latest
+npm deprecate "@mattral/<pkg>@<broken-version>" "<reason>. Use <fixed-version> or later."
+```
+
+Then bump to the next patch version and publish again.
 
 ## 4. Verify
 
@@ -102,7 +125,7 @@ npm view @mattral/core version
 npm view @mattral/server version
 ```
 
-Each should print the version you just published (`1.1.0` as of this
+Each should print the version you just published (`1.2.1` as of this
 writing — check `package.json` at the repo root if it's been a while).
 Then, in a scratch directory *outside* this repo (important — this is the
 real test of whether a standalone install actually works, not just the

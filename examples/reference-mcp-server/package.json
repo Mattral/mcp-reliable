@@ -1,6 +1,6 @@
 {
   "name": "@mattral/reference-mcp-server",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "A tiny stdio MCP server used to exercise mcp-reliable's collector, and as a getting-started demo target",
   "type": "module",
